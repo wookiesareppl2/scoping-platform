@@ -379,3 +379,189 @@ Please:
 4. Test loading speed on mobile devices
 5. Add mobile-specific features like click-to-call
 ```
+
+
+## 🎨 UX/UI Improvement Prompting
+
+### **Effective UX Analysis Prompts**
+
+#### **Identifying UX Issues**
+```
+"Analyze the current [component/page] for UX issues, focusing on:
+- Cognitive load and information hierarchy
+- Mobile responsiveness and touch targets
+- User flow and navigation clarity
+- Accessibility and inclusive design
+- Visual consistency and design system adherence
+
+Provide specific examples of issues and actionable improvement recommendations."
+```
+
+#### **Mobile-First Design Improvements**
+```
+"Redesign the [component] with mobile-first principles:
+- Single-column layout for better focus
+- Touch-friendly interactive elements (min 44px)
+- Optimized typography for mobile reading
+- Simplified navigation patterns
+- Progressive enhancement for larger screens
+
+Maintain design system consistency and accessibility standards."
+```
+
+#### **Form UX Optimization**
+```
+"Improve the form UX by addressing:
+- Step progression and progress indication
+- Field grouping and logical flow
+- Error handling and validation feedback
+- Auto-save and data persistence
+- Completion encouragement and gamification
+
+Focus on reducing abandonment rates and improving completion."
+```
+
+### **UX Implementation Patterns**
+
+#### **Progress Indication Pattern**
+```jsx
+// Multi-layered progress communication
+<div className="progress-header">
+  <div className="overall-progress">
+    <Progress value={completionPercentage} />
+    <Badge>Step {current} of {total}</Badge>
+  </div>
+  
+  <div className="category-navigation">
+    {categories.map(category => (
+      <CategoryButton 
+        icon={category.icon}
+        completion={category.completion}
+        isCurrent={category.isCurrent}
+      />
+    ))}
+  </div>
+</div>
+```
+
+#### **Responsive Layout Pattern**
+```jsx
+// Mobile-first responsive design
+<div className="container">
+  {/* Mobile: Single column */}
+  <div className="block lg:hidden">
+    <MobileOptimizedLayout />
+  </div>
+  
+  {/* Desktop: Enhanced layout */}
+  <div className="hidden lg:block">
+    <DesktopLayout />
+  </div>
+</div>
+```
+
+#### **Category Metadata Pattern**
+```jsx
+// Enhanced category information
+const categoryMetadata = {
+  [CATEGORY_ID]: {
+    icon: IconComponent,
+    title: 'Human-Readable Title',
+    description: 'Clear purpose explanation',
+    color: 'theme-color-class',
+    estimatedTime: '5-10 minutes'
+  }
+};
+```
+
+### **UX Testing Prompts**
+
+#### **Usability Evaluation**
+```
+"Evaluate the usability of [feature] by:
+- Walking through the user journey step-by-step
+- Identifying potential confusion points
+- Testing on different screen sizes
+- Checking keyboard navigation
+- Validating error states and edge cases
+
+Provide specific recommendations for each issue found."
+```
+
+#### **Accessibility Audit**
+```
+"Perform an accessibility audit focusing on:
+- ARIA labels and semantic HTML
+- Keyboard navigation support
+- Screen reader compatibility
+- Color contrast ratios
+- Focus management and visual indicators
+
+Ensure WCAG 2.1 AA compliance throughout."
+```
+
+### **Common UX Anti-Patterns to Avoid**
+
+#### **❌ Cognitive Overload**
+```jsx
+// DON'T: Too many elements competing for attention
+<div className="grid grid-cols-3">
+  <Sidebar />
+  <MainContent />
+  <AnotherSidebar />
+</div>
+```
+
+#### **✅ Focused Experience**
+```jsx
+// DO: Single-column, focused layout
+<div className="max-w-4xl mx-auto">
+  <MainContent />
+</div>
+```
+
+#### **❌ Unclear Progress**
+```jsx
+// DON'T: Vague progress indication
+<div>Step 1</div>
+```
+
+#### **✅ Clear Progress Communication**
+```jsx
+// DO: Multiple progress indicators
+<div className="progress-system">
+  <ProgressBar value={percentage} />
+  <StepIndicator current={2} total={6} />
+  <CategoryNavigation />
+</div>
+```
+
+### **UX Improvement Workflow**
+
+1. **Analysis Phase**
+   ```
+   "Analyze current UX issues in [component/feature]"
+   "Identify user pain points and friction areas"
+   "Research best practices for [specific UX pattern]"
+   ```
+
+2. **Design Phase**
+   ```
+   "Create improved UX design for [component]"
+   "Ensure mobile-first responsive design"
+   "Maintain design system consistency"
+   ```
+
+3. **Implementation Phase**
+   ```
+   "Implement UX improvements with proper semantic HTML"
+   "Add accessibility features and ARIA labels"
+   "Test across different devices and browsers"
+   ```
+
+4. **Validation Phase**
+   ```
+   "Test improved UX for usability issues"
+   "Validate accessibility compliance"
+   "Measure performance impact of changes"
+   ```
