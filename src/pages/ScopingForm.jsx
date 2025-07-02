@@ -1,148 +1,148 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import FormWizard from '../components/FormWizard';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { CheckCircle, ArrowLeft } from 'lucide-react';
+import { ArrowLeft, CheckCircle, AlertCircle } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 const ScopingForm = () => {
   const navigate = useNavigate();
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
   const [submissionId, setSubmissionId] = useState(null);
 
-  const handleSubmit = async (answers) => {
+  // Handle form submission
+  const handleFormSubmit = async (formData) => {
+    setIsLoading(true);
+    setError(null);
+    
     try {
-      // Simulate API submission
+      // Create submission object
       const submission = {
         id: Date.now().toString(),
-        answers,
+        answers: formData,
         status: 'submitted',
         submittedAt: new Date().toISOString(),
         clientInfo: {
-          name: answers.company_name || 'Unknown Client',
-          email: 'client@example.com' // This would come from a separate form
-        }
+          name: formData.company_name || formData.contact_name || 'Unknown Client',
+          email: formData.email || 'client@example.com',
+          phone: formData.phone || '',
+          website: formData.website || ''
+        },
+        completeness: calculateCompleteness(formData),
+        qualityScore: calculateQualityScore(formData)
       };
 
-      // Save to localStorage (in a real app, this would be an API call)
-      const existingSubmissions = JSON.parse(localStorage.getItem('scopingSubmissions') || '[]');
+      // Save to localStorage
+      const existingSubmissions = JSON.parse(localStorage.getItem('scopingSubmissions')) || [];
       existingSubmissions.push(submission);
       localStorage.setItem('scopingSubmissions', JSON.stringify(existingSubmissions));
 
+      // Set success state
       setSubmissionId(submission.id);
       setIsSubmitted(true);
-
-      // Auto-save success notification
-      console.log('Scoping form submitted successfully:', submission);
-    } catch (error) {
-      console.error('Error submitting scoping form:', error);
-      throw error;
+      
+      console.log('Form submitted successfully:', submission);
+    } catch (err) {
+      console.error('Error submitting form:', err);
+      setError('Failed to submit form. Please try again.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const handleSave = async (answers) => {
+  // Handle form save (draft)
+  const handleFormSave = (formData) => {
     try {
       // Save draft to localStorage
       const draft = {
-        answers,
+        id: 'draft_' + Date.now(),
+        answers: formData,
+        status: 'draft',
         savedAt: new Date().toISOString()
       };
-      localStorage.setItem('scopingDraft', JSON.stringify(draft));
-      console.log('Draft saved successfully');
-    } catch (error) {
-      console.error('Error saving draft:', error);
-      throw error;
+      
+      localStorage.setItem('scopingFormDraft', JSON.stringify(draft));
+      console.log('Form saved as draft:', draft);
+    } catch (err) {
+      console.error('Error saving draft:', err);
     }
   };
 
-  // Load existing draft on component mount
-  React.useEffect(() => {
-    const savedDraft = localStorage.getItem('scopingDraft');
-    if (savedDraft) {
-      try {
-        const draft = JSON.parse(savedDraft);
-        console.log('Found saved draft from:', draft.savedAt);
-        // The FormWizard component would need to be updated to accept initial values
-      } catch (error) {
-        console.error('Error loading draft:', error);
-      }
-    }
-  }, []);
+  // Calculate form completeness percentage
+  const calculateCompleteness = (formData) => {
+    if (!formData || typeof formData !== 'object') return 0;
+    
+    const totalFields = Object.keys(formData).length;
+    const completedFields = Object.values(formData).filter(value => 
+      value !== null && value !== undefined && value !== ''
+    ).length;
+    
+    return totalFields > 0 ? Math.round((completedFields / totalFields) * 100) : 0;
+  };
 
+  // Calculate quality score based on answer length and detail
+  const calculateQualityScore = (formData) => {
+    if (!formData || typeof formData !== 'object') return 0;
+    
+    let totalScore = 0;
+    let fieldCount = 0;
+    
+    Object.values(formData).forEach(value => {
+      if (value && typeof value === 'string') {
+        fieldCount++;
+        // Score based on answer length and detail
+        if (value.length > 100) totalScore += 100;
+        else if (value.length > 50) totalScore += 75;
+        else if (value.length > 20) totalScore += 50;
+        else if (value.length > 0) totalScore += 25;
+      } else if (value && typeof value === 'object') {
+        fieldCount++;
+        totalScore += 75; // Arrays/objects get medium score
+      } else if (value) {
+        fieldCount++;
+        totalScore += 50; // Other non-empty values
+      }
+    });
+    
+    return fieldCount > 0 ? Math.round(totalScore / fieldCount) : 0;
+  };
+
+  // Success view after submission
   if (isSubmitted) {
     return (
-      <div className="max-w-2xl mx-auto">
-        <Card className="text-center">
-          <CardHeader>
-            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+      <div className="max-w-2xl mx-auto p-6">
+        <Card>
+          <CardHeader className="text-center">
+            <div className="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
               <CheckCircle className="w-8 h-8 text-green-600" />
             </div>
-            <CardTitle className="text-2xl text-green-800">
-              Scoping Form Submitted Successfully!
-            </CardTitle>
+            <CardTitle className="text-2xl text-green-800">Submission Successful!</CardTitle>
             <CardDescription className="text-lg">
-              Thank you for providing detailed information about your project.
+              Thank you for providing your project requirements. We'll review your submission and get back to you soon.
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-6">
+          <CardContent className="space-y-4">
             <div className="bg-gray-50 p-4 rounded-lg">
-              <p className="text-sm text-gray-600 mb-2">
-                <strong>Submission ID:</strong> {submissionId}
-              </p>
-              <p className="text-sm text-gray-600">
-                <strong>Submitted:</strong> {new Date().toLocaleString()}
-              </p>
+              <p className="text-sm text-gray-600">Submission ID:</p>
+              <p className="font-mono text-sm font-medium">{submissionId}</p>
             </div>
+            
+            <Alert>
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>
+                We typically respond within 24-48 hours with follow-up questions or a detailed project proposal.
+              </AlertDescription>
+            </Alert>
 
-            <div className="space-y-4">
-              <h3 className="font-semibold text-lg">What happens next?</h3>
-              <div className="text-left space-y-3">
-                <div className="flex items-start space-x-3">
-                  <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <span className="text-xs font-bold text-blue-600">1</span>
-                  </div>
-                  <div>
-                    <p className="font-medium">Review & Analysis</p>
-                    <p className="text-sm text-gray-600">
-                      Our team will review your requirements and may reach out for clarification.
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-start space-x-3">
-                  <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <span className="text-xs font-bold text-blue-600">2</span>
-                  </div>
-                  <div>
-                    <p className="font-medium">Proposal Creation</p>
-                    <p className="text-sm text-gray-600">
-                      We'll create a detailed proposal with timeline and pricing.
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-start space-x-3">
-                  <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <span className="text-xs font-bold text-blue-600">3</span>
-                  </div>
-                  <div>
-                    <p className="font-medium">Project Kickoff</p>
-                    <p className="text-sm text-gray-600">
-                      Once approved, we'll begin development with clear milestones.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="flex flex-col sm:flex-row gap-3 justify-center">
-              <Button onClick={() => navigate('/admin')} variant="outline">
-                View in Admin Dashboard
+            <div className="flex gap-3 pt-4">
+              <Button onClick={() => navigate('/')} variant="outline" className="flex-1">
+                Return Home
               </Button>
-              <Button onClick={() => {
-                setIsSubmitted(false);
-                setSubmissionId(null);
-                localStorage.removeItem('scopingDraft');
-              }}>
-                Submit Another Scoping
+              <Button onClick={() => navigate('/admin')} className="flex-1">
+                View Admin Dashboard
               </Button>
             </div>
           </CardContent>
@@ -151,29 +151,47 @@ const ScopingForm = () => {
     );
   }
 
+  // Main form view
   return (
-    <div className="space-y-6">
+    <div className="max-w-4xl mx-auto p-6">
       {/* Header */}
-      <div className="flex items-center space-x-4">
+      <div className="mb-6">
         <Button 
+          onClick={() => navigate(-1)} 
           variant="ghost" 
-          size="sm"
-          onClick={() => navigate('/')}
-          className="flex items-center space-x-2"
+          className="mb-4"
         >
-          <ArrowLeft className="w-4 h-4" />
-          <span>Back to Home</span>
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Back
         </Button>
+        
+        <div className="text-center">
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+            Project Scoping Form
+          </h1>
+          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+            Help us understand your project requirements by providing detailed information. 
+            The more details you provide, the better we can serve you.
+          </p>
+        </div>
       </div>
+
+      {/* Error Alert */}
+      {error && (
+        <Alert variant="destructive" className="mb-6">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
 
       {/* Form Wizard */}
       <FormWizard 
-        onSubmit={handleSubmit}
-        onSave={handleSave}
+        onSubmit={handleFormSubmit}
+        onSave={handleFormSave}
+        isLoading={isLoading}
       />
     </div>
   );
 };
 
 export default ScopingForm;
-
