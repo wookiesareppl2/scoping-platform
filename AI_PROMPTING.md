@@ -636,3 +636,304 @@ Format as a professional project completion report."
 ---
 
 **These patterns establish a foundation for systematic UX improvements across the platform, ensuring consistent, user-centered design decisions.**
+
+## 💰 Budget-Aware Development Prompting Patterns
+
+### **Business Logic Implementation Prompts**
+
+#### **Budget Tier Selection System**
+```
+"Create a budget tier selection system that:
+- Presents clear options for different budget levels (budget-constrained vs full-budget)
+- Provides transparent communication about limitations and benefits for each tier
+- Uses professional, consultative language that builds trust
+- Includes comprehensive warnings and expectations for budget-constrained projects
+- Maintains professional presentation while being honest about constraints
+
+Focus on expectation management and client education rather than sales."
+```
+
+#### **Conditional Form Logic**
+```
+"Implement conditional form logic that:
+- Shows different options based on previous selections (budget tier, project type, etc.)
+- Adapts subsequent questions and validation rules appropriately
+- Maintains form state and passes context between components
+- Provides clear guidance and examples relevant to the selected path
+- Ensures smooth user experience with logical flow progression
+
+Include proper error handling and validation for conditional fields."
+```
+
+#### **Professional Limitation Communication**
+```
+"Design limitation communication that:
+- Clearly explains constraints without being negative or discouraging
+- Emphasizes the value and quality still provided within constraints
+- Uses professional, consultative language that builds confidence
+- Provides context for why limitations exist (business viability, quality maintenance)
+- Offers alternatives or upgrade paths when appropriate
+
+Focus on transparency and trust-building rather than restriction."
+```
+
+### **Component Architecture Patterns**
+
+#### **Budget-Aware Component Design**
+```jsx
+// Professional budget tier selector with clear expectations
+const BudgetTierSelector = ({ selectedTier, onTierSelect }) => {
+  const budgetTiers = [
+    {
+      id: 'budget-constrained',
+      title: 'Budget-Constrained Project',
+      price: 'Starting from $500-$2,000',
+      includes: [/* clear inclusions */],
+      limitations: [/* honest limitations */],
+      warnings: [/* professional considerations */]
+    },
+    {
+      id: 'full-budget',
+      title: 'Custom Development Project', 
+      price: 'Starting from $3,000+',
+      includes: [/* comprehensive features */],
+      limitations: [], // No limitations for full budget
+      warnings: []
+    }
+  ];
+
+  return (
+    <div className="space-y-6">
+      {/* Professional tier comparison */}
+      {budgetTiers.map(tier => (
+        <TierCard 
+          key={tier.id}
+          tier={tier}
+          isSelected={selectedTier === tier.id}
+          onSelect={() => onTierSelect(tier.id)}
+        />
+      ))}
+    </div>
+  );
+};
+```
+
+#### **Conditional Requirements Component**
+```jsx
+// Dynamic options based on budget selection
+const ConditionalRequirements = ({ budgetTier, selectedType, onTypeSelect }) => {
+  // Different options for different budget tiers
+  const getOptionsForTier = (tier) => {
+    switch (tier) {
+      case 'budget-constrained':
+        return staticWebsiteOptions; // Limited to static sites
+      case 'full-budget':
+        return allWebsiteOptions; // All functionality available
+      default:
+        return [];
+    }
+  };
+
+  const options = getOptionsForTier(budgetTier);
+
+  return (
+    <div>
+      {/* Budget-specific guidance */}
+      <BudgetGuidance tier={budgetTier} />
+      
+      {/* Appropriate options for tier */}
+      <OptionsGrid 
+        options={options}
+        selectedType={selectedType}
+        onTypeSelect={onTypeSelect}
+      />
+    </div>
+  );
+};
+```
+
+#### **Form Integration Pattern**
+```jsx
+// Enhanced FormQuestion with conditional logic support
+const FormQuestion = ({ question, value, onChange, error, formData }) => {
+  switch (question.type) {
+    case 'budget_tier_selector':
+      return (
+        <BudgetTierSelector
+          selectedTier={value}
+          onTierSelect={onChange}
+        />
+      );
+
+    case 'conditional_website_type':
+      const budgetTier = formData?.budget_tier;
+      return (
+        <ConditionalTechnicalRequirements
+          budgetTier={budgetTier}
+          selectedWebsiteType={value}
+          onWebsiteTypeSelect={onChange}
+        />
+      );
+
+    default:
+      return <StandardFormField />;
+  }
+};
+```
+
+### **Business Communication Patterns**
+
+#### **Professional Constraint Messaging**
+```
+"Frame budget constraints professionally by:
+- Emphasizing value and quality within constraints
+- Explaining business rationale for limitations (sustainability, quality focus)
+- Providing clear examples of what IS included
+- Using consultative language that builds trust
+- Offering context about why constraints enable better service
+
+Example: 'This option focuses on delivering maximum value within budget constraints by streamlining our process while maintaining professional quality standards.'"
+```
+
+#### **Expectation Setting Language**
+```
+"Use expectation-setting language that:
+- Clearly communicates what to expect without being negative
+- Builds confidence in the chosen approach
+- Provides context for decision-making
+- Emphasizes collaborative partnership
+- Sets realistic timelines and deliverables
+
+Example: 'This approach requires thorough initial scoping as changes are minimal, ensuring we deliver exactly what you need the first time.'"
+```
+
+#### **Trust-Building Communication**
+```
+"Build trust through transparent communication by:
+- Being honest about limitations and constraints
+- Explaining the reasoning behind different approaches
+- Providing clear value propositions for each option
+- Using professional, consultative language
+- Demonstrating expertise through thoughtful guidance
+
+Focus on being a trusted advisor rather than a vendor."
+```
+
+### **Form Flow Design Patterns**
+
+#### **Progressive Disclosure**
+```
+"Implement progressive disclosure that:
+- Shows information and options at the right time
+- Prevents overwhelming users with too many choices initially
+- Builds understanding progressively through the form
+- Adapts content based on previous selections
+- Maintains clear progress indication throughout
+
+Start with high-level decisions and progressively reveal details."
+```
+
+#### **Conditional Validation**
+```
+"Create conditional validation that:
+- Adapts validation rules based on user selections
+- Provides appropriate error messages for each context
+- Ensures required fields are contextually relevant
+- Maintains form integrity across different paths
+- Gives clear guidance for completing each section
+
+Validation should be helpful and contextually appropriate."
+```
+
+#### **Context-Aware Guidance**
+```
+"Provide context-aware guidance that:
+- Adapts help text and examples based on selections
+- Offers relevant suggestions for each user path
+- Explains why certain information is needed
+- Provides appropriate examples for the selected context
+- Maintains consistent tone and helpfulness throughout
+
+Guidance should feel personalized and relevant."
+```
+
+### **Testing and Validation Patterns**
+
+#### **Budget Tier Flow Testing**
+```
+"Test budget-aware flows by:
+- Validating each budget tier path independently
+- Ensuring appropriate options appear for each tier
+- Testing conditional logic and form state management
+- Verifying professional presentation of limitations
+- Checking mobile responsiveness for all components
+
+Test both happy paths and edge cases for each tier."
+```
+
+#### **Client Experience Validation**
+```
+"Validate client experience by:
+- Testing complete form flows for different budget tiers
+- Ensuring clear understanding of limitations and benefits
+- Verifying professional presentation and messaging
+- Checking accessibility and usability across devices
+- Gathering feedback on expectation clarity and trust-building
+
+Focus on client understanding and confidence building."
+```
+
+### **Common Budget-Aware Anti-Patterns**
+
+#### **❌ Avoid: Negative Limitation Framing**
+```jsx
+// DON'T: Frame limitations negatively
+<Alert variant="destructive">
+  <p>Budget projects can't have these features...</p>
+</Alert>
+```
+
+#### **✅ Prefer: Professional Value Framing**
+```jsx
+// DO: Frame as focused value delivery
+<Alert variant="info">
+  <p>This option focuses on delivering maximum value through streamlined, 
+     professional static websites perfect for your needs.</p>
+</Alert>
+```
+
+#### **❌ Avoid: Overwhelming Initial Choices**
+```jsx
+// DON'T: Show all options without context
+<div>
+  {allWebsiteTypes.map(type => <Option key={type.id} type={type} />)}
+</div>
+```
+
+#### **✅ Prefer: Progressive, Context-Aware Disclosure**
+```jsx
+// DO: Show appropriate options based on budget tier
+<div>
+  {getOptionsForBudgetTier(budgetTier).map(type => 
+    <Option key={type.id} type={type} />
+  )}
+</div>
+```
+
+### **Success Metrics for Budget-Aware Features**
+
+#### **Completion Rate Optimization**
+- Budget tier selection completion: Target 95%+
+- Conditional flow completion: Target 90%+ after tier selection
+- Overall form completion: Monitor impact on total rates
+- Client satisfaction with expectation setting
+
+#### **Business Process Improvement**
+- Reduced scope creep in budget-constrained projects
+- Improved project profitability across tiers
+- Better client-project matching
+- Enhanced professional reputation
+
+---
+
+**These patterns establish a framework for implementing budget-aware features that balance business needs with professional client service, ensuring sustainable and profitable project delivery across different budget tiers.**
