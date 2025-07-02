@@ -407,3 +407,40 @@ For questions, support, or collaboration opportunities:
 
 Built with ❤️ for web development agencies who want to streamline their client onboarding process.
 
+
+
+## 📝 Scoping Form Feature
+
+### Overview
+The scoping form is a comprehensive multi-step wizard that guides clients through providing detailed project requirements. It features psychology-driven design elements to encourage complete submissions.
+
+### Key Features
+- **Multi-step wizard** with progress indicators
+- **Smart conditional logic** that adapts questions based on responses
+- **Psychology-driven design** with gamification elements
+- **Real-time validation** and helpful hints
+- **Mobile-responsive** design for all devices
+- **Draft saving** functionality for incomplete forms
+- **Success page** with submission confirmation
+- **Admin dashboard** integration for review workflow
+
+### Usage
+1. Navigate to the scoping form via:
+   - "Start New Scoping" button on homepage
+   - "New Scoping" menu item in navigation
+2. Complete the multi-step form with project details
+3. Submit for review or save as draft
+4. Receive confirmation with submission ID
+
+### Technical Implementation
+- **Route**: `/scoping-form`
+- **Component**: `ScopingForm.jsx`
+- **Form Engine**: `FormWizard.jsx`
+- **Data Storage**: LocalStorage with export capabilities
+- **Error Handling**: ErrorBoundary wrapper for graceful failures
+
+### Recent Updates
+- ✅ Fixed routing mismatch between links and route configuration
+- ✅ Implemented comprehensive error handling and user feedback
+- ✅ Added success page and submission confirmation workflow
+- ✅ Enhanced mobile responsiveness and accessibility
