@@ -311,3 +311,71 @@ Please:
 4. Add accessibility testing and improvements
 5. Document testing procedures and coverage
 ```
+
+
+## 🏠 Homepage Design & Content Prompts
+
+### Content Strategy Updates
+```
+Now I'd like to work on the homepage messaging, which involves:
+Updating the value proposition to better address client pain points.
+
+Please:
+1. Research common client concerns about web development projects
+2. Update hero section messaging to address these concerns
+3. Add social proof or testimonials if available
+4. Test different call-to-action button text variations
+5. Ensure messaging aligns with target client personas
+```
+
+### Conversion Optimization
+```
+Now I'd like to work on homepage conversion optimization, which involves:
+Improving the call-to-action placement and effectiveness.
+
+Please:
+1. Add multiple CTA buttons at strategic points
+2. Implement A/B testing for button colors and text
+3. Add urgency or scarcity elements where appropriate
+4. Optimize form preview or progress indicators
+5. Test and measure conversion improvements
+```
+
+### Visual Design Enhancements
+```
+Now I'd like to work on homepage visual design, which involves:
+Adding more engaging visual elements while maintaining simplicity.
+
+Please:
+1. Add subtle animations or micro-interactions
+2. Include relevant imagery or illustrations
+3. Improve typography hierarchy and readability
+4. Add visual progress indicators for the process
+5. Ensure accessibility standards are met
+```
+
+### Trust Building Elements
+```
+Now I'd like to work on homepage trust building, which involves:
+Adding elements that increase client confidence in the process.
+
+Please:
+1. Add client testimonials or case study previews
+2. Include security badges or certifications
+3. Add team photos or company information
+4. Include estimated response time commitments
+5. Add FAQ section addressing common concerns
+```
+
+### Mobile Experience Optimization
+```
+Now I'd like to work on homepage mobile experience, which involves:
+Optimizing the design specifically for mobile users.
+
+Please:
+1. Improve mobile navigation and button sizing
+2. Optimize text readability on small screens
+3. Ensure touch targets meet accessibility guidelines
+4. Test loading speed on mobile devices
+5. Add mobile-specific features like click-to-call
+```
