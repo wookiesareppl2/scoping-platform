@@ -4,18 +4,22 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { 
-  ChevronLeft, 
-  ChevronRight, 
-  CheckCircle, 
+  ChevronLeft,
+  ChevronRight,
+  CheckCircle,
   Circle,
   Save,
-  Send
+  Send,
+  Clock,
+  Users,
+  Settings,
+  Palette,
+  Calendar,
+  Zap
 } from 'lucide-react';
 import { SCOPING_CATEGORIES, getCategoryQuestions, shouldShowQuestion, validateAnswer } from '../types/scoping';
 import FormQuestion from './FormQuestion';
-import ProgressGamification from './ProgressGamification';
 import HelpfulHints from './HelpfulHints';
-import VisualFeedback from './VisualFeedback';
 
 const FormWizard = ({ onSubmit, onSave }) => {
   const [currentStep, setCurrentStep] = useState(0);
@@ -28,22 +32,45 @@ const FormWizard = ({ onSubmit, onSave }) => {
   const [qualityScore, setQualityScore] = useState(0);
 
   const categories = Object.values(SCOPING_CATEGORIES);
-  const categoryNames = {
-    [SCOPING_CATEGORIES.BUSINESS]: 'Business & Brand',
-    [SCOPING_CATEGORIES.TECHNICAL]: 'Technical Requirements',
-    [SCOPING_CATEGORIES.CONTENT]: 'Content & Functionality',
-    [SCOPING_CATEGORIES.DESIGN]: 'Design Preferences',
-    [SCOPING_CATEGORIES.TIMELINE]: 'Timeline & Budget',
-    [SCOPING_CATEGORIES.INTEGRATIONS]: 'Third-Party Integrations'
-  };
-
-  const categoryDescriptions = {
-    [SCOPING_CATEGORIES.BUSINESS]: 'Tell us about your business and goals',
-    [SCOPING_CATEGORIES.TECHNICAL]: 'Define your technical needs and requirements',
-    [SCOPING_CATEGORIES.CONTENT]: 'Plan your content structure and management',
-    [SCOPING_CATEGORIES.DESIGN]: 'Share your design vision and preferences',
-    [SCOPING_CATEGORIES.TIMELINE]: 'Set your timeline and budget expectations',
-    [SCOPING_CATEGORIES.INTEGRATIONS]: 'Specify any third-party tools or services'
+  
+  // Enhanced category metadata with icons and descriptions
+  const categoryMetadata = {
+    [SCOPING_CATEGORIES.BUSINESS]: { 
+      icon: Users, 
+      title: 'Business & Brand',
+      description: 'Tell us about your business and goals',
+      color: 'bg-blue-500'
+    },
+    [SCOPING_CATEGORIES.TECHNICAL]: { 
+      icon: Settings, 
+      title: 'Technical Requirements',
+      description: 'Define your technical needs and requirements',
+      color: 'bg-green-500'
+    },
+    [SCOPING_CATEGORIES.CONTENT]: { 
+      icon: Clock, 
+      title: 'Content & Functionality',
+      description: 'Plan your content structure and management',
+      color: 'bg-purple-500'
+    },
+    [SCOPING_CATEGORIES.DESIGN]: { 
+      icon: Palette, 
+      title: 'Design Preferences',
+      description: 'Share your design vision and preferences',
+      color: 'bg-pink-500'
+    },
+    [SCOPING_CATEGORIES.TIMELINE]: { 
+      icon: Calendar, 
+      title: 'Timeline & Budget',
+      description: 'Set your timeline and budget expectations',
+      color: 'bg-orange-500'
+    },
+    [SCOPING_CATEGORIES.INTEGRATIONS]: { 
+      icon: Zap, 
+      title: 'Third-Party Integrations',
+      description: 'Specify any third-party tools or services',
+      color: 'bg-indigo-500'
+    }
   };
 
   // Calculate progress
@@ -60,9 +87,18 @@ const FormWizard = ({ onSubmit, onSave }) => {
 
   // Get current category questions
   const currentCategory = categories[currentStep];
-  const currentQuestions = getCategoryQuestions(currentCategory).filter(q => 
+  const currentQuestions = getCategoryQuestions(currentCategory).filter(q =>
     shouldShowQuestion(q, answers)
   );
+
+  // Calculate category completion
+  const getCategoryCompletion = (category) => {
+    const categoryQuestions = getCategoryQuestions(category).filter(q => shouldShowQuestion(q, answers));
+    const answeredInCategory = categoryQuestions.filter(q => 
+      answers[q.id] !== undefined && answers[q.id] !== null && answers[q.id] !== ''
+    ).length;
+    return categoryQuestions.length > 0 ? (answeredInCategory / categoryQuestions.length) * 100 : 0;
+  };
 
   // Validate current step
   const validateCurrentStep = () => {
@@ -93,7 +129,7 @@ const FormWizard = ({ onSubmit, onSave }) => {
       setRecentAnswer(value);
     }
 
-    // Calculate quality score based on answer completeness
+    // Calculate quality score based on answer completeness and detail
     const newQualityScore = calculateQualityScore({ ...answers, [questionId]: value });
     setQualityScore(newQualityScore);
 
@@ -193,132 +229,106 @@ const FormWizard = ({ onSubmit, onSave }) => {
   const canProceed = currentQuestions.every(q => !q.required || answers[q.id]);
 
   return (
-    <div className="max-w-7xl mx-auto space-y-6">
-      {/* Progress Header */}
-      <Card>
-        <CardHeader className="pb-4">
+    <div className="min-h-screen bg-gray-50">
+      {/* Enhanced Progress Header */}
+      <div className="bg-white border-b border-gray-200 sticky top-0 z-10">
+        <div className="max-w-4xl mx-auto px-4 py-6">
+          {/* Step Indicator */}
           <div className="flex items-center justify-between mb-4">
-            <div>
-              <CardTitle className="text-2xl">Client Scoping Form</CardTitle>
-              <CardDescription>
-                Step {currentStep + 1} of {categories.length}: {categoryNames[currentCategory]}
-              </CardDescription>
+            <div className="flex items-center space-x-4">
+              <h1 className="text-2xl font-bold text-gray-900">Project Requirements</h1>
+              <Badge variant="secondary" className="text-sm">
+                Step {currentStep + 1} of {categories.length}
+              </Badge>
             </div>
-            <Badge variant="secondary" className="text-sm">
+            <div className="text-sm text-gray-500">
               {Math.round(progressPercentage)}% Complete
-            </Badge>
+            </div>
           </div>
-          <Progress value={progressPercentage} className="w-full" />
-        </CardHeader>
-      </Card>
 
-      {/* Main Content Grid */}
-      <div className="grid lg:grid-cols-3 gap-6">
-        {/* Left Sidebar - Psychology Components */}
-        <div className="lg:col-span-1 space-y-4">
-          <ProgressGamification
-            currentProgress={progressPercentage}
-            totalQuestions={totalQuestions}
-            answeredQuestions={answeredQuestions}
-            currentCategory={currentCategory}
-            completedCategories={categories.slice(0, currentStep)}
-            timeSpent={timeSpent}
-          />
-          
-          <VisualFeedback
-            answeredQuestions={answeredQuestions}
-            totalQuestions={totalQuestions}
-            currentCategory={currentCategory}
-            recentAnswer={recentAnswer}
-            timeSpent={timeSpent}
-            qualityScore={qualityScore}
-          />
+          {/* Progress Bar */}
+          <div className="mb-4">
+            <Progress value={progressPercentage} className="h-2" />
+          </div>
+
+          {/* Category Navigation */}
+          <div className="flex flex-wrap gap-2">
+            {categories.map((category, index) => {
+              const metadata = categoryMetadata[category];
+              const completion = getCategoryCompletion(category);
+              const isCompleted = completion === 100;
+              const isCurrent = index === currentStep;
+              const IconComponent = metadata.icon;
+
+              return (
+                <Button
+                  key={category}
+                  variant={isCurrent ? "default" : isCompleted ? "secondary" : "outline"}
+                  size="sm"
+                  onClick={() => setCurrentStep(index)}
+                  className="flex items-center space-x-2 h-auto py-2 px-3"
+                >
+                  <IconComponent className="w-4 h-4" />
+                  <span className="hidden sm:inline">{metadata.title}</span>
+                  {isCompleted && (
+                    <CheckCircle className="w-4 h-4 text-green-600" />
+                  )}
+                  {!isCompleted && completion > 0 && (
+                    <div className="w-4 h-4 rounded-full border-2 border-current relative">
+                      <div 
+                        className="absolute inset-0 rounded-full bg-current"
+                        style={{ clipPath: `inset(${100 - completion}% 0 0 0)` }}
+                      />
+                    </div>
+                  )}
+                </Button>
+              );
+            })}
+          </div>
         </div>
-
-        {/* Main Form Content */}
-        <div className="lg:col-span-2 space-y-6">{/* Step Navigation */}
-      <div className="flex flex-wrap gap-2 justify-center">{categories.map((category, index) => {
-          const isCompleted = index < currentStep;
-          const isCurrent = index === currentStep;
-          const categoryQuestions = getCategoryQuestions(category).filter(q => 
-            shouldShowQuestion(q, answers)
-          );
-          const answeredInCategory = categoryQuestions.filter(q => 
-            answers[q.id] !== undefined && answers[q.id] !== null && answers[q.id] !== ''
-          ).length;
-          
-          return (
-            <Button
-              key={category}
-              variant={isCurrent ? "default" : isCompleted ? "secondary" : "outline"}
-              size="sm"
-              onClick={() => setCurrentStep(index)}
-              className="flex items-center space-x-2"
-            >
-              {isCompleted ? (
-                <CheckCircle className="w-4 h-4" />
-              ) : (
-                <Circle className="w-4 h-4" />
-              )}
-              <span className="hidden sm:inline">
-                {categoryNames[category]}
-              </span>
-              <span className="sm:hidden">
-                {index + 1}
-              </span>
-              {categoryQuestions.length > 0 && (
-                <Badge variant="outline" className="ml-1 text-xs">
-                  {answeredInCategory}/{categoryQuestions.length}
-                </Badge>
-              )}
-            </Button>
-          );
-        })}
       </div>
 
-      {/* Current Step Content */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
-            <span>{categoryNames[currentCategory]}</span>
-          </CardTitle>
-          <CardDescription>
-            {categoryDescriptions[currentCategory]}
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          {currentQuestions.length === 0 ? (
-            <div className="text-center py-8">
-              <p className="text-gray-500">
-                No questions in this category based on your previous answers.
-              </p>
+      {/* Main Content */}
+      <div className="max-w-4xl mx-auto px-4 py-8">
+        <Card>
+          <CardHeader className="pb-4">
+            <div className="flex items-center space-x-3">
+              {React.createElement(categoryMetadata[currentCategory].icon, {
+                className: `w-6 h-6 text-white p-1 rounded ${categoryMetadata[currentCategory].color}`
+              })}
+              <div>
+                <CardTitle className="text-xl">
+                  {categoryMetadata[currentCategory].title}
+                </CardTitle>
+                <CardDescription className="text-base">
+                  {categoryMetadata[currentCategory].description}
+                </CardDescription>
+              </div>
             </div>
-          ) : (
-            currentQuestions.map((question, index) => (
+          </CardHeader>
+
+          <CardContent className="space-y-6">
+            {/* Questions */}
+            {currentQuestions.map((question) => (
               <div key={question.id} className="space-y-4">
                 <FormQuestion
                   question={question}
                   value={answers[question.id]}
-                  error={errors[question.id]}
                   onChange={(value) => handleAnswerChange(question.id, value)}
-                  answers={answers}
+                  error={errors[question.id]}
                 />
-                <HelpfulHints
-                  questionId={question.id}
+                
+                {/* Helpful Hints */}
+                <HelpfulHints 
                   questionType={question.type}
                   category={currentCategory}
+                  questionId={question.id}
                 />
               </div>
-            ))
-          )}
-        </CardContent>
-      </Card>
+            ))}
 
-      {/* Navigation Footer */}
-      <Card>
-        <CardContent className="pt-6">
-          <div className="flex flex-col sm:flex-row justify-between items-center space-y-4 sm:space-y-0">
-            <div className="flex space-x-2">
+            {/* Navigation */}
+            <div className="flex items-center justify-between pt-6 border-t border-gray-200">
               <Button
                 variant="outline"
                 onClick={handlePrevious}
@@ -328,39 +338,78 @@ const FormWizard = ({ onSubmit, onSave }) => {
                 <ChevronLeft className="w-4 h-4" />
                 <span>Previous</span>
               </Button>
-              
-              {!isLastStep ? (
-                <Button
-                  onClick={handleNext}
-                  disabled={!canProceed}
-                  className="flex items-center space-x-2"
-                >
-                  <span>Next</span>
-                  <ChevronRight className="w-4 h-4" />
-                </Button>
-              ) : (
-                <Button
-                  onClick={handleSubmit}
-                  disabled={!canProceed || isSubmitting}
-                  className="flex items-center space-x-2"
-                >
-                  <Send className="w-4 h-4" />
-                  <span>{isSubmitting ? 'Submitting...' : 'Submit Scoping'}</span>
-                </Button>
-              )}
-            </div>
 
-            <Button
-              variant="ghost"
-              onClick={handleSave}
-              className="flex items-center space-x-2"
-            >
-              <Save className="w-4 h-4" />
-              <span>Save Draft</span>
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+              <div className="flex items-center space-x-3">
+                <Button
+                  variant="outline"
+                  onClick={handleSave}
+                  className="flex items-center space-x-2"
+                >
+                  <Save className="w-4 h-4" />
+                  <span>Save Draft</span>
+                </Button>
+
+                {isLastStep ? (
+                  <Button
+                    onClick={handleSubmit}
+                    disabled={!canProceed || isSubmitting}
+                    className="flex items-center space-x-2"
+                  >
+                    <Send className="w-4 h-4" />
+                    <span>{isSubmitting ? 'Submitting...' : 'Submit Requirements'}</span>
+                  </Button>
+                ) : (
+                  <Button
+                    onClick={handleNext}
+                    disabled={!canProceed}
+                    className="flex items-center space-x-2"
+                  >
+                    <span>Next</span>
+                    <ChevronRight className="w-4 h-4" />
+                  </Button>
+                )}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Progress Summary */}
+        <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center space-x-2">
+                <CheckCircle className="w-5 h-5 text-green-600" />
+                <div>
+                  <div className="font-semibold">{answeredQuestions} / {totalQuestions}</div>
+                  <div className="text-sm text-gray-500">Questions Answered</div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center space-x-2">
+                <Clock className="w-5 h-5 text-blue-600" />
+                <div>
+                  <div className="font-semibold">{Math.floor(timeSpent / 60)}m {timeSpent % 60}s</div>
+                  <div className="text-sm text-gray-500">Time Spent</div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center space-x-2">
+                <Circle className="w-5 h-5 text-purple-600" />
+                <div>
+                  <div className="font-semibold">{qualityScore}%</div>
+                  <div className="text-sm text-gray-500">Detail Quality</div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>
@@ -368,4 +417,3 @@ const FormWizard = ({ onSubmit, onSave }) => {
 };
 
 export default FormWizard;
-
