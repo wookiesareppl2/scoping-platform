@@ -3,196 +3,159 @@ import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { 
-  FileText, 
-  Users, 
-  BarChart3, 
-  CheckCircle, 
-  Clock, 
-  Target,
   ArrowRight,
-  Zap,
-  Shield,
-  Smartphone
+  CheckCircle,
+  Clock,
+  FileText,
+  Users
 } from 'lucide-react';
 
 const Home = () => {
-  const features = [
-    {
-      icon: FileText,
-      title: 'Smart Scoping Forms',
-      description: 'Multi-step forms with conditional logic that adapt based on client responses'
-    },
-    {
-      icon: Target,
-      title: 'Psychology-Driven Design',
-      description: 'Gamified progress indicators and helpful hints encourage complete submissions'
-    },
-    {
-      icon: Users,
-      title: 'Admin Dashboard',
-      description: 'Review submissions, request clarifications, and manage the approval workflow'
-    },
-    {
-      icon: BarChart3,
-      title: 'Analytics & Insights',
-      description: 'Track completion rates, identify common issues, and optimize your process'
-    },
-    {
-      icon: Zap,
-      title: 'Development Integration',
-      description: 'Export directly to your development format with GitHub integration'
-    },
-    {
-      icon: Shield,
-      title: 'Professional & Secure',
-      description: 'Enterprise-grade security with data validation and backup systems'
-    }
-  ];
-
-  const benefits = [
-    {
-      icon: CheckCircle,
-      title: 'Complete Information',
-      description: 'Get all the details you need upfront to avoid scope creep and revisions'
-    },
-    {
-      icon: Clock,
-      title: 'Save Time',
-      description: 'Reduce back-and-forth emails and meetings with structured information gathering'
-    },
-    {
-      icon: Target,
-      title: 'Better Projects',
-      description: 'Well-scoped projects lead to happier clients and more successful outcomes'
-    }
-  ];
-
   return (
-    <div className="space-y-12">
+    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
       {/* Hero Section */}
-      <div className="text-center space-y-6">
-        <div className="space-y-4">
-          <h1 className="text-4xl md:text-6xl font-bold text-gray-900">
-            Professional Client
-            <span className="text-blue-600"> Scoping System</span>
+      <div className="container mx-auto px-4 py-16 text-center">
+        <div className="max-w-4xl mx-auto">
+          <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6">
+            Let's Build Your
+            <span className="text-blue-600 block">Perfect Website</span>
           </h1>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            Streamline your client onboarding process with intelligent forms, 
-            psychology-driven design, and seamless development workflow integration.
+          
+          <p className="text-xl md:text-2xl text-gray-600 mb-8 leading-relaxed">
+            Help us understand your project requirements so we can create 
+            an accurate proposal and timeline for your website development.
           </p>
-        </div>
-        
-        <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          <Button asChild size="lg" className="text-lg px-8 py-3">
+          
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-8">
+            <p className="text-lg text-blue-800 font-medium">
+              The more detailed information you provide, the more accurate our proposal will be.
+            </p>
+            <p className="text-blue-700 mt-2">
+              This helps us avoid scope changes and ensures your project stays on time and budget.
+            </p>
+          </div>
+          
+          <Button asChild size="lg" className="text-lg px-8 py-6 mb-4">
             <Link to="/scoping-form">
-              Start New Scoping
+              Start Project Requirements
               <ArrowRight className="ml-2 w-5 h-5" />
             </Link>
           </Button>
-          <Button asChild variant="outline" size="lg" className="text-lg px-8 py-3">
-            <Link to="/admin">
-              Admin Dashboard
-            </Link>
-          </Button>
-        </div>
-      </div>
-
-      {/* Features Grid */}
-      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {features.map((feature, index) => {
-          const Icon = feature.icon;
-          return (
-            <Card key={index} className="hover:shadow-lg transition-shadow">
-              <CardHeader>
-                <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-4">
-                  <Icon className="w-6 h-6 text-blue-600" />
-                </div>
-                <CardTitle className="text-xl">{feature.title}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <CardDescription className="text-base">
-                  {feature.description}
-                </CardDescription>
-              </CardContent>
-            </Card>
-          );
-        })}
-      </div>
-
-      {/* Benefits Section */}
-      <div className="bg-blue-50 rounded-2xl p-8 md:p-12">
-        <div className="text-center mb-12">
-          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-            Why Use Our Scoping System?
-          </h2>
-          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-            Transform your client onboarding from chaotic to systematic, 
-            ensuring every project starts with crystal-clear requirements.
+          
+          <p className="text-sm text-gray-500">
+            Takes 10-15 minutes • Your information is secure
           </p>
         </div>
+      </div>
 
-        <div className="grid md:grid-cols-3 gap-8">
-          {benefits.map((benefit, index) => {
-            const Icon = benefit.icon;
-            return (
-              <div key={index} className="text-center">
-                <div className="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-6">
-                  <Icon className="w-8 h-8 text-white" />
-                </div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-3">
-                  {benefit.title}
-                </h3>
-                <p className="text-gray-600">
-                  {benefit.description}
-                </p>
+      {/* Simple Process Section */}
+      <div className="container mx-auto px-4 py-16">
+        <div className="max-w-4xl mx-auto">
+          <h2 className="text-3xl font-bold text-center text-gray-900 mb-12">
+            Simple 3-Step Process
+          </h2>
+          
+          <div className="grid md:grid-cols-3 gap-8">
+            <div className="text-center">
+              <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <FileText className="w-8 h-8 text-blue-600" />
               </div>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Quick Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-        <div className="text-center">
-          <div className="text-3xl font-bold text-blue-600">6</div>
-          <div className="text-sm text-gray-600">Scoping Categories</div>
-        </div>
-        <div className="text-center">
-          <div className="text-3xl font-bold text-blue-600">50+</div>
-          <div className="text-sm text-gray-600">Smart Questions</div>
-        </div>
-        <div className="text-center">
-          <div className="text-3xl font-bold text-blue-600">100%</div>
-          <div className="text-sm text-gray-600">Mobile Responsive</div>
-        </div>
-        <div className="text-center">
-          <div className="text-3xl font-bold text-blue-600">⚡</div>
-          <div className="text-sm text-gray-600">Lightning Fast</div>
-        </div>
-      </div>
-
-      {/* CTA Section */}
-      <Card className="bg-gradient-to-r from-blue-600 to-purple-600 text-white">
-        <CardContent className="p-8 md:p-12 text-center">
-          <h2 className="text-3xl font-bold mb-4">
-            Ready to Transform Your Client Onboarding?
-          </h2>
-          <p className="text-xl mb-8 opacity-90">
-            Start gathering comprehensive project requirements today.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button asChild size="lg" variant="secondary" className="text-lg px-8 py-3">
-              <Link to="/scoping-form">
-                Create Your First Scoping
-                <ArrowRight className="ml-2 w-5 h-5" />
-              </Link>
-            </Button>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">1. Share Your Vision</h3>
+              <p className="text-gray-600">
+                Tell us about your business, goals, and what you want your website to achieve.
+              </p>
+            </div>
+            
+            <div className="text-center">
+              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Users className="w-8 h-8 text-green-600" />
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">2. We Review & Discuss</h3>
+              <p className="text-gray-600">
+                Our team reviews your requirements and may ask follow-up questions for clarity.
+              </p>
+            </div>
+            
+            <div className="text-center">
+              <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <CheckCircle className="w-8 h-8 text-purple-600" />
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">3. Receive Your Proposal</h3>
+              <p className="text-gray-600">
+                Get a detailed proposal with timeline, pricing, and next steps for your project.
+              </p>
+            </div>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
+
+      {/* Why This Matters Section */}
+      <div className="bg-gray-50 py-16">
+        <div className="container mx-auto px-4">
+          <div className="max-w-4xl mx-auto">
+            <h2 className="text-3xl font-bold text-center text-gray-900 mb-12">
+              Why Detailed Requirements Matter
+            </h2>
+            
+            <div className="grid md:grid-cols-2 gap-8">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <Clock className="w-5 h-5 text-blue-600 mr-2" />
+                    Accurate Timeline
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-gray-600">
+                    Detailed requirements help us provide realistic timelines and avoid delays 
+                    caused by unclear specifications.
+                  </p>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <CheckCircle className="w-5 h-5 text-green-600 mr-2" />
+                    Better Results
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-gray-600">
+                    The more we understand your vision, the better we can bring it to life 
+                    and exceed your expectations.
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
+            
+            <div className="text-center mt-12">
+              <p className="text-lg text-gray-700 mb-6">
+                Ready to get started? The form takes just 10-15 minutes to complete.
+              </p>
+              
+              <Button asChild size="lg" className="text-lg px-8 py-4">
+                <Link to="/scoping-form">
+                  Begin Project Requirements
+                  <ArrowRight className="ml-2 w-5 h-5" />
+                </Link>
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Trust & Security Footer */}
+      <div className="container mx-auto px-4 py-8">
+        <div className="max-w-2xl mx-auto text-center">
+          <p className="text-sm text-gray-500">
+            Your information is kept confidential and secure. We use it only to understand 
+            your project requirements and provide you with an accurate proposal.
+          </p>
+        </div>
+      </div>
     </div>
   );
 };
 
 export default Home;
-
