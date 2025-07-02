@@ -339,7 +339,13 @@ src/
 
 ### ✅ Completed Features
 
-#### Scoping Form System (v1.0)
+#### Homepage Redesign (v2.0)
+- **Status**: ✅ Complete and Deployed
+- **Focus**: Client-centric design with conversion optimization
+- **Key Changes**: Removed technical features, added clear CTA, simplified messaging
+- **Impact**: Improved client experience and scoping form conversion
+- **Testing**: Manual testing completed, mobile responsiveness verified
+\n#### Scoping Form System (v1.0)
 - **Status**: ✅ Complete and Deployed
 - **Components**: ScopingForm.jsx, FormWizard.jsx, ErrorBoundary.jsx
 - **Features**: Multi-step wizard, conditional logic, psychology-driven design
