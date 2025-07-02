@@ -231,3 +231,83 @@ refactor(export): optimize data transformation logic
 ---
 
 This guide should be updated as the project evolves and new patterns emerge.
+
+## 📝 Scoping Form Feature Prompts
+
+### Form Enhancement Requests
+```
+Now I'd like to work on the scoping form validation, which involves:
+Adding real-time validation for email fields and required questions.
+
+Please:
+1. Add email format validation to contact fields
+2. Implement required field highlighting
+3. Add progress validation before step advancement
+4. Test validation with various input scenarios
+5. Commit changes with descriptive messages
+```
+
+### UI/UX Improvements
+```
+Now I'd like to work on the scoping form user experience, which involves:
+Improving the visual feedback and progress indicators.
+
+Please:
+1. Enhance progress bar with completion percentages
+2. Add smooth transitions between form steps
+3. Improve mobile touch interactions
+4. Add loading animations for better perceived performance
+5. Test on various screen sizes and devices
+```
+
+### Data Management Features
+```
+Now I'd like to work on scoping form data export, which involves:
+Adding CSV and PDF export functionality for submissions.
+
+Please:
+1. Implement CSV export for submission data
+2. Add PDF generation for formatted reports
+3. Create export buttons in admin dashboard
+4. Add date range filtering for exports
+5. Test export functionality with sample data
+```
+
+### Integration Enhancements
+```
+Now I'd like to work on scoping form integrations, which involves:
+Adding email notifications when forms are submitted.
+
+Please:
+1. Implement email service integration
+2. Create notification templates for submissions
+3. Add admin notification preferences
+4. Test email delivery and formatting
+5. Update documentation with email setup instructions
+```
+
+### Performance Optimization
+```
+Now I'd like to work on scoping form performance, which involves:
+Optimizing form loading and submission speed.
+
+Please:
+1. Implement lazy loading for form components
+2. Add form data caching for better UX
+3. Optimize bundle size and loading times
+4. Add performance monitoring
+5. Test performance improvements across devices
+```
+
+### Testing and Quality Assurance
+```
+Now I'd like to work on scoping form testing, which involves:
+Adding comprehensive test coverage for form functionality.
+
+Please:
+1. Create unit tests for form validation logic
+2. Add integration tests for submission workflow
+3. Implement end-to-end testing for user journeys
+4. Add accessibility testing and improvements
+5. Document testing procedures and coverage
+```
