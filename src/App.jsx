@@ -6,20 +6,23 @@ import ScopingForm from './pages/ScopingForm';
 import AdminDashboard from './pages/AdminDashboard';
 import Submissions from './pages/Submissions';
 import Analytics from './pages/Analytics';
+import ErrorBoundary from './components/ErrorBoundary';
 
 function App() {
   return (
-    <Router>
-      <Routes>
-        <Route path="/" element={<Layout />}>
-          <Route index element={<Home />} />
-          <Route path="scoping-form" element={<ScopingForm />} />
-          <Route path="admin" element={<AdminDashboard />} />
-          <Route path="submissions" element={<Submissions />} />
-          <Route path="analytics" element={<Analytics />} />
-        </Route>
-      </Routes>
-    </Router>
+    <ErrorBoundary>
+      <Router>
+        <Routes>
+          <Route path="/" element={<Layout />}>
+            <Route index element={<Home />} />
+            <Route path="scoping-form" element={<ScopingForm />} />
+            <Route path="admin" element={<AdminDashboard />} />
+            <Route path="submissions" element={<Submissions />} />
+            <Route path="analytics" element={<Analytics />} />
+          </Route>
+        </Routes>
+      </Router>
+    </ErrorBoundary>
   );
 }
 
