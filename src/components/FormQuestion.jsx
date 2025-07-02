@@ -1,4 +1,6 @@
 import React from 'react';
+import BudgetTierSelector from './BudgetTierSelector';
+import ConditionalTechnicalRequirements from './ConditionalTechnicalRequirements';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -231,7 +233,28 @@ const FormQuestion = ({ question, value, error, onChange, answers }) => {
           </div>
         );
 
-      default:
+      case 'budget_tier_selector':
+      return (
+        <BudgetTierSelector
+          selectedTier={value}
+          onTierSelect={(tier) => onChange(tier)}
+          className="mt-4"
+        />
+      );
+
+    case 'conditional_website_type':
+      // Get budget tier from form data
+      const budgetTier = formData?.budget_tier;
+      return (
+        <ConditionalTechnicalRequirements
+          budgetTier={budgetTier}
+          selectedWebsiteType={value}
+          onWebsiteTypeSelect={(type) => onChange(type)}
+          className="mt-4"
+        />
+      );
+
+    default:
         return (
           <div className="text-red-500 text-sm">
             Unsupported question type: {type}
