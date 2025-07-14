@@ -48,11 +48,14 @@ export const QUESTION_TYPES = {
   SELECT: 'select',
   RADIO: 'radio',
   CHECKBOX: 'checkbox',
+  MULTISELECT: 'multiselect',
   NUMBER: 'number',
   EMAIL: 'email',
   URL: 'url',
-  BUDGET_TIER: 'budget-tier',
-  WEBSITE_TYPE: 'website-type'
+  DATE: 'date',
+  FILE: 'file',
+  BUDGET_TIER_SELECTOR: 'budget_tier_selector',
+  CONDITIONAL_WEBSITE_TYPE: 'conditional_website_type'
 };
 
 // Budget-aware question logic
@@ -77,11 +80,11 @@ export const validateAnswer = (question, answer, formData = {}) => {
   }
 
   // Budget-specific validation
-  if (question.type === QUESTION_TYPES.BUDGET_TIER && !answer) {
+  if (question.type === QUESTION_TYPES.BUDGET_TIER_SELECTOR && !answer) {
     return 'Please select a budget tier to continue';
   }
 
-  if (question.type === QUESTION_TYPES.WEBSITE_TYPE && !answer) {
+  if (question.type === QUESTION_TYPES.CONDITIONAL_WEBSITE_TYPE && !answer) {
     return 'Please select a website type to continue';
   }
 
@@ -219,7 +222,7 @@ export const getCategoryQuestions = (category) => {
       {
         id: 'budget_tier',
         text: 'What is your project budget tier?',
-        type: QUESTION_TYPES.BUDGET_TIER,
+        type: QUESTION_TYPES.BUDGET_TIER_SELECTOR,
         required: true,
         category: SCOPING_CATEGORIES.TECHNICAL,
         hint: 'This helps us provide appropriate technical options for your budget'
@@ -227,7 +230,7 @@ export const getCategoryQuestions = (category) => {
       {
         id: 'website_type',
         text: 'What type of website do you need?',
-        type: QUESTION_TYPES.WEBSITE_TYPE,
+        type: QUESTION_TYPES.CONDITIONAL_WEBSITE_TYPE,
         required: true,
         category: SCOPING_CATEGORIES.TECHNICAL,
         requiresBudgetTier: true,

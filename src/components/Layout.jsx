@@ -19,7 +19,7 @@ const Layout = () => {
 
   const navigation = [
     { name: 'Home', href: '/', icon: Home },
-    { name: 'New Scoping', href: '/scoping', icon: FileText },
+    { name: 'New Scoping', href: '/scoping-form', icon: FileText },
     { name: 'Admin Dashboard', href: '/admin', icon: Settings },
     { name: 'Submissions', href: '/submissions', icon: Users },
     { name: 'Analytics', href: '/analytics', icon: BarChart3 },

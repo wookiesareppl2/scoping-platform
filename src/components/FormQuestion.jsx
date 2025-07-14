@@ -234,26 +234,25 @@ const FormQuestion = ({ question, value, error, onChange, answers }) => {
         );
 
       case 'budget_tier_selector':
-      return (
-        <BudgetTierSelector
-          selectedTier={value}
-          onTierSelect={(tier) => onChange(tier)}
-          className="mt-4"
-        />
-      );
+        return (
+          <BudgetTierSelector
+            selectedTier={value}
+            onTierSelect={(tier) => handleChange(tier)}
+            className="mt-4"
+          />
+        );
 
-    case 'conditional_website_type':
-      // Get budget tier from form data
-      const budgetTier = formData?.budget_tier;
-      return (
-        <ConditionalTechnicalRequirements
-          budgetTier={budgetTier}
-          selectedWebsiteType={value}
-          onWebsiteTypeSelect={(type) => onChange(type)}
-          className="mt-4"
-        />
-      );
-
+      case 'conditional_website_type':
+        // Get budget tier from form data
+        const budgetTier = answers?.budget_tier;
+        return (
+          <ConditionalTechnicalRequirements
+            budgetTier={budgetTier}
+            selectedWebsiteType={value}
+            onWebsiteTypeSelect={(type) => handleChange(type)}
+            className="mt-4"
+          />
+        );
     default:
         return (
           <div className="text-red-500 text-sm">
