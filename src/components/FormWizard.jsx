@@ -316,6 +316,7 @@ const FormWizard = ({ onSubmit, onSave }) => {
                   value={answers[question.id]}
                   onChange={(value) => handleAnswerChange(question.id, value)}
                   error={errors[question.id]}
+                  answers={answers}
                 />
                 
                 {/* Helpful Hints */}

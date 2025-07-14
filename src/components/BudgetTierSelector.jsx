@@ -165,7 +165,10 @@ const BudgetTierSelector = ({ selectedTier, onTierSelect, className = '' }) => {
           <Button 
             variant={isSelected ? "default" : "outline"}
             className="w-full mt-4"
-            onClick={() => onTierSelect(tier.id)}
+            onClick={(e) => {
+              e.stopPropagation();
+              onTierSelect(tier.id);
+            }}
           >
             {isSelected ? 'Selected' : `Choose ${tier.title}`}
           </Button>
