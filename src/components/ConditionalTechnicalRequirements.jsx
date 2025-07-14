@@ -194,7 +194,10 @@ const ConditionalTechnicalRequirements = ({
             variant={isSelected ? "default" : "outline"}
             size="sm"
             className="w-full mt-3"
-            onClick={() => onWebsiteTypeSelect(option.id)}
+            onClick={(e) => {
+              e.stopPropagation();
+              onWebsiteTypeSelect(option.id);
+            }}
           >
             {isSelected ? 'Selected' : 'Choose This Type'}
           </Button>
