@@ -6,12 +6,13 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { 
-  FileText, 
-  Users, 
-  Clock, 
-  CheckCircle, 
-  AlertCircle, 
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import {
+  FileText,
+  Users,
+  Clock,
+  CheckCircle,
+  AlertCircle,
   MessageSquare,
   Download,
   Eye,
@@ -22,28 +23,139 @@ import {
   Calendar,
   BarChart3,
   TrendingUp,
-  Star
+  Star,
+  ArrowUpDown,
+  MoreHorizontal,
+  Mail,
+  Phone,
+  Globe,
+  Settings,
+  Database
 } from 'lucide-react';
 
 const AdminDashboard = () => {
   const [submissions, setSubmissions] = useState([]);
+  const [filteredSubmissions, setFilteredSubmissions] = useState([]);
   const [selectedSubmission, setSelectedSubmission] = useState(null);
   const [filterStatus, setFilterStatus] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
+  const [sortBy, setSortBy] = useState('submittedAt');
+  const [sortOrder, setSortOrder] = useState('desc');
   const [clarificationText, setClarificationText] = useState('');
+  const [activeTab, setActiveTab] = useState('overview');
 
-  // Load submissions from localStorage
+  // Load submissions from API
   useEffect(() => {
-    const savedSubmissions = localStorage.getItem('scopingSubmissions');
-    if (savedSubmissions) {
+    const fetchSubmissions = async () => {
       try {
-        const parsed = JSON.parse(savedSubmissions);
-        setSubmissions(parsed);
+        const response = await fetch('http://localhost:3001/api/forms');
+        if (response.ok) {
+          const data = await response.json();
+          console.log('Fetched submissions from API:', data);
+
+          // Transform API data to match expected format
+          const transformedData = data.map(submission => ({
+            id: submission._id,
+            clientInfo: {
+              name: submission.answers?.company_name || 'Unknown Client',
+              email: submission.answers?.email || 'No email provided',
+              phone: submission.answers?.phone || null,
+              website: submission.answers?.website || null
+            },
+            status: submission.status || 'submitted',
+            submittedAt: submission.metadata?.submittedAt || new Date().toISOString(),
+            answers: submission.answers || {},
+            completeness: calculateCompleteness(submission.answers),
+            qualityScore: calculateQualityScore(submission.answers),
+            estimatedValue: estimateProjectValue(submission.answers),
+            priority: calculatePriority(submission.answers)
+          }));
+
+          setSubmissions(transformedData);
+        } else {
+          console.error('Failed to fetch submissions:', response.statusText);
+          // Fallback to localStorage
+          loadFromLocalStorage();
+        }
       } catch (error) {
-        console.error('Error loading submissions:', error);
+        console.error('Error fetching submissions:', error);
+        // Fallback to localStorage
+        loadFromLocalStorage();
       }
-    }
+    };
+
+    const loadFromLocalStorage = () => {
+      const savedSubmissions = localStorage.getItem('scopingSubmissions');
+      if (savedSubmissions) {
+        try {
+          const parsed = JSON.parse(savedSubmissions);
+          setSubmissions(parsed);
+        } catch (error) {
+          console.error('Error loading submissions from localStorage:', error);
+        }
+      }
+    };
+
+    fetchSubmissions();
   }, []);
+
+  // Helper functions for calculating metrics
+  const calculateCompleteness = (answers) => {
+    if (!answers || typeof answers !== 'object') return 0;
+    const totalFields = Object.keys(answers).length;
+    const completedFields = Object.values(answers).filter(value =>
+      value !== null && value !== undefined && value !== ''
+    ).length;
+    return totalFields > 0 ? Math.round((completedFields / totalFields) * 100) : 0;
+  };
+
+  const calculateQualityScore = (answers) => {
+    if (!answers || typeof answers !== 'object') return 0;
+    let totalScore = 0;
+    let fieldCount = 0;
+
+    Object.values(answers).forEach(value => {
+      if (value && typeof value === 'string') {
+        fieldCount++;
+        if (value.length > 100) totalScore += 100;
+        else if (value.length > 50) totalScore += 75;
+        else if (value.length > 20) totalScore += 50;
+        else if (value.length > 0) totalScore += 25;
+      } else if (value && typeof value === 'object') {
+        fieldCount++;
+        totalScore += 75;
+      } else if (value) {
+        fieldCount++;
+        totalScore += 50;
+      }
+    });
+
+    return fieldCount > 0 ? Math.round(totalScore / fieldCount) : 0;
+  };
+
+  // Add missing helper functions for enhanced submissions
+  const estimateProjectValue = (answers) => {
+    if (!answers) return 0;
+
+    const budgetRange = answers.budget_range || '';
+    if (budgetRange.includes('$25,000')) return 35000;
+    if (budgetRange.includes('$10,000')) return 15000;
+    if (budgetRange.includes('$5,000')) return 7500;
+    if (budgetRange.includes('$2,000')) return 3500;
+    return 5000;
+  };
+
+  const calculatePriority = (answers) => {
+    if (!answers) return 'medium';
+
+    const deadline = answers.launch_deadline || '';
+    const budget = answers.budget_range || '';
+
+    if (deadline.includes('ASAP') || deadline.includes('2-4 weeks')) return 'high';
+    if (budget.includes('$25,000') || budget.includes('$50,000')) return 'high';
+    if (deadline.includes('3-6 months') || deadline.includes('flexible')) return 'low';
+    return 'medium';
+  };
 
   // Mock data for demonstration if no submissions exist
   useEffect(() => {
@@ -110,14 +222,39 @@ const AdminDashboard = () => {
     }
   }, [submissions.length]);
 
-  // Filter submissions
-  const filteredSubmissions = submissions.filter(submission => {
-    const matchesStatus = filterStatus === 'all' || submission.status === filterStatus;
-    const matchesSearch = searchTerm === '' || 
-      submission.clientInfo.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      submission.clientInfo.email.toLowerCase().includes(searchTerm.toLowerCase());
-    return matchesStatus && matchesSearch;
-  });
+  // Filter and sort submissions
+  useEffect(() => {
+    let filtered = submissions.filter(submission => {
+      const matchesStatus = filterStatus === 'all' || submission.status === filterStatus;
+      const matchesSearch = searchTerm === '' ||
+        submission.clientInfo.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        submission.clientInfo.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (submission.answers.industry && submission.answers.industry.toLowerCase().includes(searchTerm.toLowerCase()));
+      return matchesStatus && matchesSearch;
+    });
+
+    // Sort submissions
+    filtered.sort((a, b) => {
+      let aValue = a[sortBy];
+      let bValue = b[sortBy];
+
+      if (sortBy === 'submittedAt') {
+        aValue = new Date(aValue);
+        bValue = new Date(bValue);
+      } else if (sortBy === 'clientInfo.name') {
+        aValue = a.clientInfo.name;
+        bValue = b.clientInfo.name;
+      }
+
+      if (sortOrder === 'asc') {
+        return aValue > bValue ? 1 : -1;
+      } else {
+        return aValue < bValue ? 1 : -1;
+      }
+    });
+
+    setFilteredSubmissions(filtered);
+  }, [submissions, searchTerm, filterStatus, sortBy, sortOrder]);
 
   // Status colors and labels
   const getStatusInfo = (status) => {
@@ -133,7 +270,7 @@ const AdminDashboard = () => {
 
   // Update submission status
   const updateSubmissionStatus = (submissionId, newStatus) => {
-    const updatedSubmissions = submissions.map(sub => 
+    const updatedSubmissions = submissions.map(sub =>
       sub.id === submissionId ? { ...sub, status: newStatus } : sub
     );
     setSubmissions(updatedSubmissions);
@@ -189,14 +326,39 @@ const AdminDashboard = () => {
     URL.revokeObjectURL(url);
   };
 
-  // Dashboard statistics
+  // Export all submissions
+  const exportAllSubmissions = () => {
+    const exportData = filteredSubmissions.map(submission => ({
+      id: submission.id,
+      client: submission.clientInfo,
+      status: submission.status,
+      submittedAt: submission.submittedAt,
+      completeness: submission.completeness,
+      qualityScore: submission.qualityScore,
+      estimatedValue: submission.estimatedValue || 0,
+      priority: submission.priority || 'medium',
+      answers: submission.answers
+    }));
+
+    const dataStr = JSON.stringify(exportData, null, 2);
+    const dataBlob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(dataBlob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `admin-submissions-${new Date().toISOString().split('T')[0]}.json`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
+  // Enhanced statistics
   const stats = {
     total: submissions.length,
     pending: submissions.filter(s => s.status === 'submitted').length,
     underReview: submissions.filter(s => s.status === 'under_review').length,
     needsClarification: submissions.filter(s => s.status === 'needs_clarification').length,
     approved: submissions.filter(s => s.status === 'approved').length,
-    avgCompleteness: submissions.length > 0 
+    totalValue: submissions.reduce((sum, s) => sum + (s.estimatedValue || 0), 0),
+    avgCompleteness: submissions.length > 0
       ? Math.round(submissions.reduce((sum, s) => sum + (s.completeness || 0), 0) / submissions.length)
       : 0,
     avgQuality: submissions.length > 0
@@ -207,15 +369,46 @@ const AdminDashboard = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
-        <p className="text-gray-600 mt-2">
-          Manage client scoping submissions and review project requirements.
-        </p>
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
+          <p className="text-gray-600 mt-2">
+            Comprehensive submission management and workflow control.
+          </p>
+        </div>
+        <div className="flex items-center space-x-2">
+          <Button
+            variant="outline"
+            onClick={() => window.location.reload()}
+            className="flex items-center space-x-2"
+          >
+            <TrendingUp className="w-4 h-4" />
+            <span>Refresh</span>
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => {
+              fetch('http://localhost:3001/api/health')
+                .then(res => res.json())
+                .then(data => {
+                  alert(`Server Status: ${data.message}\nDatabase: ${data.database}`);
+                })
+                .catch(err => alert('Server connection failed: ' + err.message));
+            }}
+            className="flex items-center space-x-2"
+          >
+            <Database className="w-4 h-4" />
+            <span>Check API</span>
+          </Button>
+          <Button onClick={exportAllSubmissions} className="flex items-center space-x-2">
+            <Download className="w-4 h-4" />
+            <span>Export All</span>
+          </Button>
+        </div>
       </div>
 
-      {/* Statistics Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
+      {/* Enhanced Statistics */}
+      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4">
         <Card>
           <CardContent className="p-4 text-center">
             <div className="text-2xl font-bold text-blue-600">{stats.total}</div>
@@ -225,7 +418,7 @@ const AdminDashboard = () => {
         <Card>
           <CardContent className="p-4 text-center">
             <div className="text-2xl font-bold text-orange-600">{stats.pending}</div>
-            <div className="text-xs text-gray-500">Pending Review</div>
+            <div className="text-xs text-gray-500">Pending</div>
           </CardContent>
         </Card>
         <Card>
@@ -248,31 +441,76 @@ const AdminDashboard = () => {
         </Card>
         <Card>
           <CardContent className="p-4 text-center">
-            <div className="text-2xl font-bold text-purple-600">{stats.avgCompleteness}%</div>
-            <div className="text-xs text-gray-500">Avg Completeness</div>
+            <div className="text-2xl font-bold text-purple-600">
+              ${(stats.totalValue / 1000).toFixed(0)}k
+            </div>
+            <div className="text-xs text-gray-500">Total Value</div>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-4 text-center">
-            <div className="text-2xl font-bold text-indigo-600">{stats.avgQuality}%</div>
+            <div className="text-2xl font-bold text-indigo-600">{stats.avgCompleteness}%</div>
+            <div className="text-xs text-gray-500">Avg Complete</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4 text-center">
+            <div className="text-2xl font-bold text-pink-600">{stats.avgQuality}%</div>
             <div className="text-xs text-gray-500">Avg Quality</div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Main Content */}
-      <div className="grid lg:grid-cols-3 gap-6">
-        {/* Submissions List */}
-        <div className="lg:col-span-2 space-y-4">
-          {/* Filters */}
+      {/* Tabbed Interface */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="submissions">Submissions ({filteredSubmissions.length})</TabsTrigger>
+          <TabsTrigger value="workflow">Workflow</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="overview" className="space-y-6">
+          {/* Quick Actions */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Quick Actions</CardTitle>
+              <CardDescription>Common administrative tasks</CardDescription>
+            </CardHeader>
+            <CardContent className="grid grid-cols-2 md:grid-cols-4 gap-6 p-12">
+              <Button variant="outline" className="h-36 flex-col justify-center items-center space-y-3 p-6">
+                <FileText className="w-7 h-7" />
+                <span className="text-sm font-medium text-center">New Submissions</span>
+                <Badge variant="secondary" className="text-xs">{stats.pending}</Badge>
+              </Button>
+              <Button variant="outline" className="h-36 flex-col justify-center items-center space-y-3 p-6">
+                <MessageSquare className="w-7 h-7" />
+                <span className="text-sm font-medium text-center">Need Clarification</span>
+                <Badge variant="secondary" className="text-xs">{stats.needsClarification}</Badge>
+              </Button>
+              <Button variant="outline" className="h-36 flex-col justify-center items-center space-y-3 p-6">
+                <CheckCircle className="w-7 h-7" />
+                <span className="text-sm font-medium text-center">Ready to Approve</span>
+                <Badge variant="secondary" className="text-xs">{stats.underReview}</Badge>
+              </Button>
+              <Button variant="outline" className="h-36 flex-col justify-center items-center space-y-3 p-6" onClick={exportAllSubmissions}>
+                <Download className="w-7 h-7" />
+                <span className="text-sm font-medium text-center">Export Data</span>
+                <Badge variant="secondary" className="text-xs">JSON</Badge>
+              </Button>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="submissions" className="space-y-6">
+          {/* Enhanced Filters */}
           <Card>
             <CardContent className="p-4">
-              <div className="flex flex-col sm:flex-row gap-4">
+              <div className="flex flex-col lg:flex-row gap-4">
                 <div className="flex-1">
                   <div className="relative">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                     <Input
-                      placeholder="Search by client name or email..."
+                      placeholder="Search by client name, email, or industry..."
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
                       className="pl-10"
@@ -280,7 +518,7 @@ const AdminDashboard = () => {
                   </div>
                 </div>
                 <Select value={filterStatus} onValueChange={setFilterStatus}>
-                  <SelectTrigger className="w-full sm:w-48">
+                  <SelectTrigger className="w-full lg:w-48">
                     <SelectValue placeholder="Filter by status" />
                   </SelectTrigger>
                   <SelectContent>
@@ -292,123 +530,212 @@ const AdminDashboard = () => {
                     <SelectItem value="in_development">In Development</SelectItem>
                   </SelectContent>
                 </Select>
+                <Select value={sortBy} onValueChange={setSortBy}>
+                  <SelectTrigger className="w-full lg:w-48">
+                    <SelectValue placeholder="Sort by" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="submittedAt">Date Submitted</SelectItem>
+                    <SelectItem value="clientInfo.name">Client Name</SelectItem>
+                    <SelectItem value="completeness">Completeness</SelectItem>
+                    <SelectItem value="qualityScore">Quality Score</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Button
+                  variant="outline"
+                  onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+                  className="flex items-center space-x-2"
+                >
+                  <ArrowUpDown className="w-4 h-4" />
+                  <span>{sortOrder === 'asc' ? 'Ascending' : 'Descending'}</span>
+                </Button>
               </div>
             </CardContent>
           </Card>
 
-          {/* Submissions List */}
-          <div className="space-y-3">
-            {filteredSubmissions.map((submission) => {
-              const statusInfo = getStatusInfo(submission.status);
-              const StatusIcon = statusInfo.icon;
-              
-              return (
-                <Card 
-                  key={submission.id}
-                  className={`cursor-pointer transition-all hover:shadow-md ${
-                    selectedSubmission?.id === submission.id ? 'ring-2 ring-blue-500' : ''
-                  }`}
-                  onClick={() => setSelectedSubmission(submission)}
-                >
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center space-x-3 mb-2">
-                          <h3 className="font-semibold text-gray-900">
-                            {submission.clientInfo.name}
-                          </h3>
-                          <Badge variant="outline" className={`text-${statusInfo.color}-700 border-${statusInfo.color}-200`}>
-                            <StatusIcon className="w-3 h-3 mr-1" />
-                            {statusInfo.label}
-                          </Badge>
+          {/* Enhanced Submissions List */}
+          <div className="grid lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2 space-y-3">
+              {filteredSubmissions.map((submission) => {
+                const statusInfo = getStatusInfo(submission.status);
+                const StatusIcon = statusInfo.icon;
+
+                return (
+                  <Card
+                    key={submission.id}
+                    className={`cursor-pointer transition-all hover:shadow-md ${selectedSubmission?.id === submission.id ? 'ring-2 ring-blue-500' : ''
+                      }`}
+                    onClick={() => setSelectedSubmission(submission)}
+                  >
+                    <CardContent className="p-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center space-x-3 mb-2">
+                            <h3 className="font-semibold text-gray-900">
+                              {submission.clientInfo.name}
+                            </h3>
+                            <Badge variant="outline" className={`text-${statusInfo.color}-700 border-${statusInfo.color}-200`}>
+                              <StatusIcon className="w-3 h-3 mr-1" />
+                              {statusInfo.label}
+                            </Badge>
+                          </div>
+                          <p className="text-sm text-gray-600 mb-2">
+                            {submission.clientInfo.email}
+                          </p>
+                          <div className="flex items-center space-x-4 text-xs text-gray-500">
+                            <span className="flex items-center space-x-1">
+                              <Calendar className="w-3 h-3" />
+                              <span>{new Date(submission.submittedAt).toLocaleDateString()}</span>
+                            </span>
+                            <span className="flex items-center space-x-1">
+                              <BarChart3 className="w-3 h-3" />
+                              <span>{submission.completeness}% complete</span>
+                            </span>
+                            <span className="flex items-center space-x-1">
+                              <Star className="w-3 h-3" />
+                              <span>{submission.qualityScore}% quality</span>
+                            </span>
+                          </div>
                         </div>
-                        <p className="text-sm text-gray-600 mb-2">
-                          {submission.clientInfo.email}
-                        </p>
-                        <div className="flex items-center space-x-4 text-xs text-gray-500">
-                          <span className="flex items-center space-x-1">
-                            <Calendar className="w-3 h-3" />
-                            <span>{new Date(submission.submittedAt).toLocaleDateString()}</span>
-                          </span>
-                          <span className="flex items-center space-x-1">
-                            <BarChart3 className="w-3 h-3" />
-                            <span>{submission.completeness}% complete</span>
-                          </span>
-                          <span className="flex items-center space-x-1">
-                            <Star className="w-3 h-3" />
-                            <span>{submission.qualityScore}% quality</span>
-                          </span>
+                        <div className="flex items-center space-x-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              exportSubmission(submission);
+                            }}
+                          >
+                            <Download className="w-4 h-4" />
+                          </Button>
                         </div>
                       </div>
-                      <div className="flex items-center space-x-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            exportSubmission(submission);
-                          }}
-                        >
-                          <Download className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+
+              {filteredSubmissions.length === 0 && (
+                <Card>
+                  <CardContent className="p-8 text-center">
+                    <FileText className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">No submissions found</h3>
+                    <p className="text-gray-600">
+                      {searchTerm || filterStatus !== 'all'
+                        ? 'Try adjusting your search or filter criteria.'
+                        : 'No client submissions have been received yet.'
+                      }
+                    </p>
                   </CardContent>
                 </Card>
-              );
-            })}
+              )}
+            </div>
 
-            {filteredSubmissions.length === 0 && (
-              <Card>
-                <CardContent className="p-8 text-center">
-                  <FileText className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">No submissions found</h3>
-                  <p className="text-gray-600">
-                    {searchTerm || filterStatus !== 'all' 
-                      ? 'Try adjusting your search or filter criteria.'
-                      : 'No client submissions have been received yet.'
-                    }
-                  </p>
-                </CardContent>
-              </Card>
-            )}
+            {/* Submission Details Sidebar */}
+            <div className="space-y-4">
+              {selectedSubmission ? (
+                <SubmissionDetails
+                  submission={selectedSubmission}
+                  onStatusUpdate={updateSubmissionStatus}
+                  onSendClarification={sendClarificationRequest}
+                  clarificationText={clarificationText}
+                  setClarificationText={setClarificationText}
+                />
+              ) : (
+                <Card>
+                  <CardContent className="p-8 text-center">
+                    <Eye className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">Select a Submission</h3>
+                    <p className="text-gray-600">
+                      Choose a submission from the list to view details and manage the review process.
+                    </p>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
           </div>
-        </div>
+        </TabsContent>
 
-        {/* Submission Details */}
-        <div className="space-y-4">
-          {selectedSubmission ? (
-            <SubmissionDetails 
-              submission={selectedSubmission}
-              onStatusUpdate={updateSubmissionStatus}
-              onSendClarification={sendClarificationRequest}
-              clarificationText={clarificationText}
-              setClarificationText={setClarificationText}
-            />
-          ) : (
+        <TabsContent value="workflow" className="space-y-6">
+          {/* Workflow Management */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <Card>
-              <CardContent className="p-8 text-center">
-                <Eye className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">Select a Submission</h3>
-                <p className="text-gray-600">
-                  Choose a submission from the list to view details and manage the review process.
-                </p>
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <FileText className="w-5 h-5 text-blue-600" />
+                  <span>New Submissions</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold text-blue-600 mb-2">{stats.pending}</div>
+                <p className="text-sm text-gray-600">Require initial review</p>
+                <Button className="w-full mt-4" size="sm">
+                  Review All
+                </Button>
               </CardContent>
             </Card>
-          )}
-        </div>
-      </div>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <Eye className="w-5 h-5 text-yellow-600" />
+                  <span>Under Review</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold text-yellow-600 mb-2">{stats.underReview}</div>
+                <p className="text-sm text-gray-600">In progress</p>
+                <Button className="w-full mt-4" size="sm" variant="outline">
+                  Continue Review
+                </Button>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <MessageSquare className="w-5 h-5 text-orange-600" />
+                  <span>Need Clarification</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold text-orange-600 mb-2">{stats.needsClarification}</div>
+                <p className="text-sm text-gray-600">Awaiting client response</p>
+                <Button className="w-full mt-4" size="sm" variant="outline">
+                  Follow Up
+                </Button>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <CheckCircle className="w-5 h-5 text-green-600" />
+                  <span>Approved</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold text-green-600 mb-2">{stats.approved}</div>
+                <p className="text-sm text-gray-600">Ready for development</p>
+                <Button className="w-full mt-4" size="sm" variant="outline">
+                  Export Projects
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };
 
 // Submission Details Component
-const SubmissionDetails = ({ 
-  submission, 
-  onStatusUpdate, 
-  onSendClarification, 
-  clarificationText, 
-  setClarificationText 
+const SubmissionDetails = ({
+  submission,
+  onStatusUpdate,
+  onSendClarification,
+  clarificationText,
+  setClarificationText
 }) => {
   const statusInfo = getStatusInfo(submission.status);
   const StatusIcon = statusInfo.icon;
@@ -483,7 +810,7 @@ const SubmissionDetails = ({
               Approve
             </Button>
           </div>
-          
+
           {/* Clarification Request */}
           <div className="space-y-2">
             <label className="text-sm font-medium text-gray-700">Request Clarification</label>

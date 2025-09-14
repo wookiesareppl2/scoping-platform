@@ -19,35 +19,80 @@ const ScopingForm = () => {
     setError(null);
     
     try {
-      // Create submission object
-      const submission = {
-        id: Date.now().toString(),
-        answers: formData,
-        status: 'submitted',
-        submittedAt: new Date().toISOString(),
-        clientInfo: {
-          name: formData.company_name || formData.contact_name || 'Unknown Client',
-          email: formData.email || 'client@example.com',
-          phone: formData.phone || '',
-          website: formData.website || ''
+      // Submit to API first
+      const response = await fetch('http://localhost:3001/api/forms/submit', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
         },
-        completeness: calculateCompleteness(formData),
-        qualityScore: calculateQualityScore(formData)
-      };
+        body: JSON.stringify({ answers: formData }),
+      });
 
-      // Save to localStorage
-      const existingSubmissions = JSON.parse(localStorage.getItem('scopingSubmissions')) || [];
-      existingSubmissions.push(submission);
-      localStorage.setItem('scopingSubmissions', JSON.stringify(existingSubmissions));
+      if (response.ok) {
+        const result = await response.json();
+        console.log('✅ Form submitted to database:', result);
+        
+        // Set success state with the database submission ID
+        setSubmissionId(result.submissionId);
+        setIsSubmitted(true);
+        
+        // Also save to localStorage as backup
+        const submission = {
+          id: result.submissionId,
+          answers: formData,
+          status: 'submitted',
+          submittedAt: new Date().toISOString(),
+          clientInfo: {
+            name: formData.company_name || formData.contact_name || 'Unknown Client',
+            email: formData.email || 'client@example.com',
+            phone: formData.phone || '',
+            website: formData.website || ''
+          },
+          completeness: calculateCompleteness(formData),
+          qualityScore: calculateQualityScore(formData)
+        };
 
-      // Set success state
-      setSubmissionId(submission.id);
-      setIsSubmitted(true);
+        const existingSubmissions = JSON.parse(localStorage.getItem('scopingSubmissions')) || [];
+        existingSubmissions.push(submission);
+        localStorage.setItem('scopingSubmissions', JSON.stringify(existingSubmissions));
+        
+      } else {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to submit form');
+      }
       
-      console.log('Form submitted successfully:', submission);
     } catch (err) {
-      console.error('Error submitting form:', err);
-      setError('Failed to submit form. Please try again.');
+      console.error('❌ Error submitting form:', err);
+      setError(`Failed to submit form: ${err.message}. Please try again.`);
+      
+      // Fallback: save to localStorage only
+      try {
+        const submission = {
+          id: Date.now().toString(),
+          answers: formData,
+          status: 'submitted',
+          submittedAt: new Date().toISOString(),
+          clientInfo: {
+            name: formData.company_name || formData.contact_name || 'Unknown Client',
+            email: formData.email || 'client@example.com',
+            phone: formData.phone || '',
+            website: formData.website || ''
+          },
+          completeness: calculateCompleteness(formData),
+          qualityScore: calculateQualityScore(formData)
+        };
+
+        const existingSubmissions = JSON.parse(localStorage.getItem('scopingSubmissions')) || [];
+        existingSubmissions.push(submission);
+        localStorage.setItem('scopingSubmissions', JSON.stringify(existingSubmissions));
+        
+        setSubmissionId(submission.id);
+        setIsSubmitted(true);
+        console.log('⚠️ Form saved to localStorage as fallback');
+        
+      } catch (fallbackErr) {
+        console.error('Failed to save to localStorage:', fallbackErr);
+      }
     } finally {
       setIsLoading(false);
     }

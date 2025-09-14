@@ -105,8 +105,7 @@ src/
 ├── pages/               # Page components
 │   ├── Home.jsx
 │   ├── ScopingForm.jsx
-│   ├── AdminDashboard.jsx
-│   ├── Submissions.jsx
+│   ├── AdminDashboard.jsx (unified admin interface)
 │   └── Analytics.jsx
 ├── types/               # Data models and types
 │   └── scoping.js
@@ -360,7 +359,7 @@ src/
 #### Admin Dashboard Enhancement
 - **Priority**: High
 - **Description**: Enhance submission review workflow with advanced filtering
-- **Components**: AdminDashboard.jsx, Submissions.jsx
+- **Components**: AdminDashboard.jsx (unified interface)
 - **Estimated Effort**: Medium
 
 #### Analytics & Reporting

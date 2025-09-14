@@ -1,10 +1,9 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Layout from './components/Layout';
 import Home from './pages/Home';
 import ScopingForm from './pages/ScopingForm';
 import AdminDashboard from './pages/AdminDashboard';
-import Submissions from './pages/Submissions';
 import Analytics from './pages/Analytics';
 import ErrorBoundary from './components/ErrorBoundary';
 
@@ -17,7 +16,8 @@ function App() {
             <Route index element={<Home />} />
             <Route path="scoping-form" element={<ScopingForm />} />
             <Route path="admin" element={<AdminDashboard />} />
-            <Route path="submissions" element={<Submissions />} />
+            {/* Redirect old submissions route to admin dashboard */}
+            <Route path="submissions" element={<Navigate to="/admin" replace />} />
             <Route path="analytics" element={<Analytics />} />
           </Route>
         </Routes>

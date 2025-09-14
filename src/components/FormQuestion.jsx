@@ -267,8 +267,8 @@ const FormQuestion = ({ question, value, error, onChange, answers }) => {
       <CardContent className="p-0 space-y-4">
         {/* Question Header */}
         <div className="space-y-2">
-          <Label htmlFor={id} className="text-base font-medium flex items-center space-x-2">
-            <span>{questionText}</span>
+          <Label htmlFor={id} className="text-base font-medium flex items-center space-x-2 text-gray-900 dark:text-gray-100">
+            <span>{question.text || question.question}</span>
             {required && <span className="text-red-500">*</span>}
             {hint && (
               <div className="group relative">
@@ -280,7 +280,6 @@ const FormQuestion = ({ question, value, error, onChange, answers }) => {
               </div>
             )}
           </Label>
-
           {/* Hint */}
           {hint && (
             <div className="flex items-start space-x-2 text-sm text-blue-600 bg-blue-50 p-3 rounded-lg">

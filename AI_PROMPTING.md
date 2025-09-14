@@ -21,8 +21,7 @@ src/
 ├── pages/               # Page components
 │   ├── Home.jsx
 │   ├── ScopingForm.jsx
-│   ├── AdminDashboard.jsx
-│   ├── Submissions.jsx
+│   ├── AdminDashboard.jsx (consolidated with Submissions)
 │   └── Analytics.jsx
 ├── types/               # Data models and types
 │   └── scoping.js
