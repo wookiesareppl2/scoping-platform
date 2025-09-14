@@ -10,7 +10,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { AlertCircle, HelpCircle, Lightbulb } from 'lucide-react';
+import { AlertCircle, HelpCircle, Lightbulb, AlertTriangle } from 'lucide-react';
 import { QUESTION_TYPES } from '../types/scoping';
 
 const FormQuestion = ({ question, value, error, onChange, answers }) => {
@@ -236,9 +236,9 @@ const FormQuestion = ({ question, value, error, onChange, answers }) => {
       case 'budget_tier_selector':
         return (
           <BudgetTierSelector
-            selectedTier={value}
-            onTierSelect={(tier) => handleChange(tier)}
-            className="mt-4"
+            value={value}
+            onChange={(tier) => handleChange(tier)}
+            error={error}
           />
         );
 
@@ -248,9 +248,9 @@ const FormQuestion = ({ question, value, error, onChange, answers }) => {
         return (
           <ConditionalTechnicalRequirements
             budgetTier={budgetTier}
-            selectedWebsiteType={value}
-            onWebsiteTypeSelect={(type) => handleChange(type)}
-            className="mt-4"
+            value={value}
+            onChange={(type) => handleChange(type)}
+            error={error}
           />
         );
     default:

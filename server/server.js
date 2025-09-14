@@ -3,12 +3,22 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 
+// Import security middleware
+const { securityHeaders, corsOptions, requestLogger, errorHandler, notFoundHandler } = require('./middleware/security');
+const { generalRateLimit } = require('./middleware/validation');
+
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// Middleware
-app.use(cors());
-app.use(express.json());
+// Security middleware (apply first)
+app.use(securityHeaders);
+app.use(cors(corsOptions));
+app.use(generalRateLimit);
+app.use(requestLogger);
+
+// Body parsing middleware
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Initialize MongoDB connection status
 let isMongoConnected = false;
@@ -163,9 +173,15 @@ function setupFallbackRoutes() {
   console.log('📝 In-memory fallback routes configured');
 }
 
+// Error handling middleware (apply last)
+app.use(notFoundHandler);
+app.use(errorHandler);
+
 // Start server
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-  console.log(`Health check: http://localhost:${PORT}/api/health`);
-  console.log('Using in-memory storage for development');
+  console.log(`🚀 Server running on port ${PORT}`);
+  console.log(`🔍 Health check: http://localhost:${PORT}/api/health`);
+  console.log(`🔒 Security headers enabled`);
+  console.log(`🛡️ Rate limiting active`);
+  console.log(`📊 Database: ${isMongoConnected ? 'MongoDB Atlas' : 'In-Memory'}`);
 });

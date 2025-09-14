@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
@@ -24,7 +24,7 @@ import FormQuestion from './FormQuestion';
 import HelpfulHints from './HelpfulHints';
 import { generateTestData, generateRandomTestData } from '../utils/testDataGenerator';
 
-const FormWizard = ({ onSubmit, onSave }) => {
+const FormWizard = React.memo(({ onSubmit, onSave }) => {
   const [currentStep, setCurrentStep] = useState(0);
   const [answers, setAnswers] = useState({});
   const [errors, setErrors] = useState({});
@@ -77,32 +77,40 @@ const FormWizard = ({ onSubmit, onSave }) => {
     }
   };
 
-  // Calculate progress
-  const totalQuestions = categories.reduce((total, category) => {
-    return total + getCategoryQuestions(category).filter(q => shouldShowQuestion(q, answers)).length;
-  }, 0);
+  // Calculate progress with memoization
+  const totalQuestions = useMemo(() => {
+    return categories.reduce((total, category) => {
+      return total + getCategoryQuestions(category).filter(q => shouldShowQuestion(q, answers)).length;
+    }, 0);
+  }, [categories, answers]);
 
-  const answeredQuestions = Object.keys(answers).filter(key => {
-    const answer = answers[key];
-    return answer !== undefined && answer !== null && answer !== '';
-  }).length;
+  const answeredQuestions = useMemo(() => {
+    return Object.keys(answers).filter(key => {
+      const answer = answers[key];
+      return answer !== undefined && answer !== null && answer !== '';
+    }).length;
+  }, [answers]);
 
-  const progressPercentage = totalQuestions > 0 ? (answeredQuestions / totalQuestions) * 100 : 0;
+  const progressPercentage = useMemo(() => {
+    return totalQuestions > 0 ? (answeredQuestions / totalQuestions) * 100 : 0;
+  }, [totalQuestions, answeredQuestions]);
 
-  // Get current category questions
+  // Get current category questions with memoization
   const currentCategory = categories[currentStep];
-  const currentQuestions = getCategoryQuestions(currentCategory).filter(q =>
-    shouldShowQuestion(q, answers)
-  );
+  const currentQuestions = useMemo(() => {
+    return getCategoryQuestions(currentCategory).filter(q =>
+      shouldShowQuestion(q, answers)
+    );
+  }, [currentCategory, answers]);
 
-  // Calculate category completion
-  const getCategoryCompletion = (category) => {
+  // Calculate category completion with memoization
+  const getCategoryCompletion = useCallback((category) => {
     const categoryQuestions = getCategoryQuestions(category).filter(q => shouldShowQuestion(q, answers));
     const answeredInCategory = categoryQuestions.filter(q => 
       answers[q.id] !== undefined && answers[q.id] !== null && answers[q.id] !== ''
     ).length;
     return categoryQuestions.length > 0 ? (answeredInCategory / categoryQuestions.length) * 100 : 0;
-  };
+  }, [answers]);
 
   // Validate current step
   const validateCurrentStep = () => {
@@ -309,8 +317,9 @@ const FormWizard = ({ onSubmit, onSave }) => {
                 onClick={fillTestData}
                 className="flex items-center space-x-1 text-xs"
                 title="Fill with realistic test data"
+                aria-label="Fill form with realistic test data"
               >
-                <TestTube className="w-3 h-3" />
+                <TestTube className="w-3 h-3" aria-hidden="true" />
                 <span className="hidden sm:inline">Test Data</span>
               </Button>
               
@@ -320,8 +329,9 @@ const FormWizard = ({ onSubmit, onSave }) => {
                 onClick={fillRandomTestData}
                 className="flex items-center space-x-1 text-xs"
                 title="Fill with random test data"
+                aria-label="Fill form with random test data"
               >
-                <Shuffle className="w-3 h-3" />
+                <Shuffle className="w-3 h-3" aria-hidden="true" />
                 <span className="hidden sm:inline">Random</span>
               </Button>
               
@@ -583,6 +593,6 @@ const FormWizard = ({ onSubmit, onSave }) => {
       </div>
     </div>
   );
-};
+});
 
 export default FormWizard;

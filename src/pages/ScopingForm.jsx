@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, CheckCircle, AlertCircle } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { calculateCompleteness, calculateQualityScore } from '../utils/formMetrics.js';
 
 const ScopingForm = () => {
   const navigate = useNavigate();
@@ -19,47 +20,36 @@ const ScopingForm = () => {
     setError(null);
     
     try {
+      // Import API client dynamically to avoid circular imports
+      const { apiClient, API_ENDPOINTS } = await import('../config/api.js');
+      
       // Submit to API first
-      const response = await fetch('http://localhost:3001/api/forms/submit', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
+      const result = await apiClient.post(API_ENDPOINTS.FORMS.SUBMIT, { answers: formData });
+      console.log('✅ Form submitted to database:', result);
+      
+      // Set success state with the database submission ID
+      setSubmissionId(result.submissionId);
+      setIsSubmitted(true);
+      
+      // Also save to localStorage as backup
+      const submission = {
+        id: result.submissionId,
+        answers: formData,
+        status: 'submitted',
+        submittedAt: new Date().toISOString(),
+        clientInfo: {
+          name: formData.company_name || formData.contact_name || 'Unknown Client',
+          email: formData.email || 'client@example.com',
+          phone: formData.phone || '',
+          website: formData.website || ''
         },
-        body: JSON.stringify({ answers: formData }),
-      });
+        completeness: calculateCompleteness(formData),
+        qualityScore: calculateQualityScore(formData)
+      };
 
-      if (response.ok) {
-        const result = await response.json();
-        console.log('✅ Form submitted to database:', result);
-        
-        // Set success state with the database submission ID
-        setSubmissionId(result.submissionId);
-        setIsSubmitted(true);
-        
-        // Also save to localStorage as backup
-        const submission = {
-          id: result.submissionId,
-          answers: formData,
-          status: 'submitted',
-          submittedAt: new Date().toISOString(),
-          clientInfo: {
-            name: formData.company_name || formData.contact_name || 'Unknown Client',
-            email: formData.email || 'client@example.com',
-            phone: formData.phone || '',
-            website: formData.website || ''
-          },
-          completeness: calculateCompleteness(formData),
-          qualityScore: calculateQualityScore(formData)
-        };
-
-        const existingSubmissions = JSON.parse(localStorage.getItem('scopingSubmissions')) || [];
-        existingSubmissions.push(submission);
-        localStorage.setItem('scopingSubmissions', JSON.stringify(existingSubmissions));
-        
-      } else {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to submit form');
-      }
+      const existingSubmissions = JSON.parse(localStorage.getItem('scopingSubmissions')) || [];
+      existingSubmissions.push(submission);
+      localStorage.setItem('scopingSubmissions', JSON.stringify(existingSubmissions));
       
     } catch (err) {
       console.error('❌ Error submitting form:', err);
@@ -116,73 +106,7 @@ const ScopingForm = () => {
     }
   };
 
-  // Calculate form completeness percentage
-  const calculateCompleteness = (formData) => {
-    if (!formData || typeof formData !== 'object') return 0;
-    
-    // Get all relevant questions based on current form data
-    const allQuestions = getAllQuestions();
-    const relevantQuestions = allQuestions.filter(q => shouldShowQuestion(q, formData));
-    
-    const completedFields = relevantQuestions.filter(q => {
-      const value = formData[q.id];
-      if (Array.isArray(value)) {
-        return value.length > 0;
-      }
-      return value !== null && value !== undefined && value !== '';
-    });
-    
-    return relevantQuestions.length > 0 ? Math.round((completedFields.length / relevantQuestions.length) * 100) : 0;
-  };
 
-  // Import required functions
-  const getAllQuestions = () => {
-    // This should be imported from types/scoping.js but we'll implement a simple version
-    const categories = ['business', 'technical', 'content', 'design', 'timeline', 'integrations'];
-    const allQuestions = [];
-    
-    categories.forEach(category => {
-      // Add basic questions for each category
-      allQuestions.push(
-        { id: `${category}_question_1`, required: true },
-        { id: `${category}_question_2`, required: false }
-      );
-    });
-    
-    return allQuestions;
-  };
-
-  const shouldShowQuestion = (question, formData) => {
-    // Simple implementation - in real app this would be more complex
-    return true;
-  };
-
-  // Calculate quality score based on answer length and detail
-  const calculateQualityScore = (formData) => {
-    if (!formData || typeof formData !== 'object') return 0;
-    
-    let totalScore = 0;
-    let fieldCount = 0;
-    
-    Object.values(formData).forEach(value => {
-      if (value && typeof value === 'string') {
-        fieldCount++;
-        // Score based on answer length and detail
-        if (value.length > 100) totalScore += 100;
-        else if (value.length > 50) totalScore += 75;
-        else if (value.length > 20) totalScore += 50;
-        else if (value.length > 0) totalScore += 25;
-      } else if (value && typeof value === 'object') {
-        fieldCount++;
-        totalScore += 75; // Arrays/objects get medium score
-      } else if (value) {
-        fieldCount++;
-        totalScore += 50; // Other non-empty values
-      }
-    });
-    
-    return fieldCount > 0 ? Math.round(totalScore / fieldCount) : 0;
-  };
 
   // Success view after submission
   if (isSubmitted) {
