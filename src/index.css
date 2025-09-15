@@ -2,6 +2,21 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Remove blue diamond from tooltips */
+[data-radix-tooltip-content] {
+  --arrow-background: transparent !important;
+  --arrow-border: transparent !important;
+}
+
+[data-radix-tooltip-content]::before,
+[data-radix-tooltip-content]::after {
+  display: none !important;
+}
+
+[data-side='top'] > [data-arrow] {
+  display: none !important;
+}
+
 @layer base {
   :root {
     --background: 0 0% 100%;
@@ -112,6 +127,10 @@
 
 /* Custom utility classes */
 @layer utilities {
+  .homepage-letsgo-btn:hover,
+  .homepage-letsgo-btn:hover a {
+    color: #fff !important;
+  }
   .text-balance {
     text-wrap: balance;
   }

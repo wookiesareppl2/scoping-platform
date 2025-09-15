@@ -357,38 +357,34 @@ const HelpfulHints = ({ questionId, questionType, category }) => {
 
   return (
     <Card className={`border-${color}-200 bg-${color}-50`}>
-      <CardContent className="p-4">
-        <div className="space-y-3">
-          {/* Hint Header */}
-          <div className="flex items-center justify-between">
+      <CardContent className={`p-2 ${isExpanded ? 'pb-4' : 'pb-2'}`}>
+        <div className="space-y-0">
+          {/* Hint Header - compact when closed */}
+          <div className="flex items-center justify-between cursor-pointer" onClick={() => setExpandedHint(isExpanded ? null : questionId)}>
             <div className="flex items-center space-x-2">
-              <div className={`w-6 h-6 bg-${color}-100 rounded-full flex items-center justify-center`}>
+              <div className={`w-5 h-5 bg-${color}-100 rounded-full flex items-center justify-center`}>
                 <HintIcon className={`w-3 h-3 text-${color}-600`} />
               </div>
-              <h4 className={`text-sm font-medium text-${color}-800`}>
-                {hint.title}
-              </h4>
-              <Badge variant="outline" className="text-xs">
-                {hint.type}
-              </Badge>
+              <span className={`text-xs font-medium text-${color}-800`}>{hint.title}</span>
             </div>
             <Button
               variant="ghost"
-              size="sm"
-              onClick={() => setExpandedHint(isExpanded ? null : questionId)}
-              className="h-6 w-6 p-0"
+              size="icon"
+              tabIndex={-1}
+              className="h-5 w-5 p-0"
+              aria-label={isExpanded ? 'Collapse hint' : 'Expand hint'}
             >
               {isExpanded ? (
-                <ChevronUp className="w-4 h-4" />
+                <ChevronUp className="w-3 h-3" />
               ) : (
-                <ChevronDown className="w-4 h-4" />
+                <ChevronDown className="w-3 h-3" />
               )}
             </Button>
           </div>
 
           {/* Hint Content */}
           {isExpanded && (
-            <div className="pt-2 border-t border-gray-200">
+            <div className="pt-2 border-t border-gray-200 mt-2">
               {renderHintContent()}
             </div>
           )}

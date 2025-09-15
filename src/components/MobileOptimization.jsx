@@ -18,7 +18,6 @@ export const MobileNavigation = ({ isOpen, onToggle, currentPath }) => {
     { path: '/', label: 'Home', icon: Monitor },
     { path: '/scoping-form', label: 'Start Scoping', icon: Smartphone },
     { path: '/admin', label: 'Admin Dashboard', icon: Tablet },
-    { path: '/submissions', label: 'Submissions', icon: Monitor },
     { path: '/analytics', label: 'Analytics', icon: Tablet }
   ];
 

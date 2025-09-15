@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
@@ -15,21 +15,30 @@ import {
   Settings,
   Palette,
   Calendar,
-  Zap
+  Zap,
+  TestTube,
+  Shuffle,
+  Shield
 } from 'lucide-react';
 import { SCOPING_CATEGORIES, getCategoryQuestions, shouldShowQuestion, validateAnswer } from '../types/scoping';
 import FormQuestion from './FormQuestion';
 import HelpfulHints from './HelpfulHints';
+import { generateTestData, generateRandomTestData } from '../utils/testDataGenerator';
 
-const FormWizard = ({ onSubmit, onSave }) => {
+const FormWizard = React.memo(({ onSubmit, onSave }) => {
   const [currentStep, setCurrentStep] = useState(0);
-  const [answers, setAnswers] = useState({});
+  const [answers, setAnswers] = useState({
+    // Initialize with empty arrays for all checkbox fields to prevent undefined issues
+    third_party_tools: [],
+    analytics_tracking: []
+  });
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [startTime] = useState(Date.now());
   const [timeSpent, setTimeSpent] = useState(0);
   const [recentAnswer, setRecentAnswer] = useState('');
   const [qualityScore, setQualityScore] = useState(0);
+  const [notification, setNotification] = useState(null);
 
   const categories = Object.values(SCOPING_CATEGORIES);
   
@@ -70,35 +79,53 @@ const FormWizard = ({ onSubmit, onSave }) => {
       title: 'Third-Party Integrations',
       description: 'Specify any third-party tools or services',
       color: 'bg-indigo-500'
+    },
+    [SCOPING_CATEGORIES.MAINTENANCE]: { 
+      icon: Shield, 
+      title: 'Maintenance & Support',
+      description: 'Plan for ongoing maintenance and support needs',
+      color: 'bg-teal-500'
     }
   };
 
-  // Calculate progress
-  const totalQuestions = categories.reduce((total, category) => {
-    return total + getCategoryQuestions(category).filter(q => shouldShowQuestion(q, answers)).length;
-  }, 0);
+  // Calculate progress with memoization
+  const totalQuestions = useMemo(() => {
+    return categories.reduce((total, category) => {
+      return total + getCategoryQuestions(category).filter(q => shouldShowQuestion(q, answers)).length;
+    }, 0);
+  }, [categories, answers]);
 
-  const answeredQuestions = Object.keys(answers).filter(key => {
-    const answer = answers[key];
-    return answer !== undefined && answer !== null && answer !== '';
-  }).length;
+  const answeredQuestions = useMemo(() => {
+    // Only count answers for questions that are currently visible/active
+    const allVisibleQuestions = categories.flatMap(category =>
+      getCategoryQuestions(category).filter(q => shouldShowQuestion(q, answers))
+    );
+    return allVisibleQuestions.filter(q => {
+      const answer = answers[q.id];
+      return answer !== undefined && answer !== null && answer !== '';
+    }).length;
+  }, [categories, answers]);
 
-  const progressPercentage = totalQuestions > 0 ? (answeredQuestions / totalQuestions) * 100 : 0;
+  const progressPercentage = useMemo(() => {
+    return totalQuestions > 0 ? (answeredQuestions / totalQuestions) * 100 : 0;
+  }, [totalQuestions, answeredQuestions]);
 
-  // Get current category questions
+  // Get current category questions with memoization
   const currentCategory = categories[currentStep];
-  const currentQuestions = getCategoryQuestions(currentCategory).filter(q =>
-    shouldShowQuestion(q, answers)
-  );
+  const currentQuestions = useMemo(() => {
+    return getCategoryQuestions(currentCategory).filter(q =>
+      shouldShowQuestion(q, answers)
+    );
+  }, [currentCategory, answers]);
 
-  // Calculate category completion
-  const getCategoryCompletion = (category) => {
+  // Calculate category completion with memoization
+  const getCategoryCompletion = useCallback((category) => {
     const categoryQuestions = getCategoryQuestions(category).filter(q => shouldShowQuestion(q, answers));
     const answeredInCategory = categoryQuestions.filter(q => 
       answers[q.id] !== undefined && answers[q.id] !== null && answers[q.id] !== ''
     ).length;
     return categoryQuestions.length > 0 ? (answeredInCategory / categoryQuestions.length) * 100 : 0;
-  };
+  }, [answers]);
 
   // Validate current step
   const validateCurrentStep = () => {
@@ -119,10 +146,32 @@ const FormWizard = ({ onSubmit, onSave }) => {
 
   // Handle answer change
   const handleAnswerChange = (questionId, value) => {
-    setAnswers(prev => ({
-      ...prev,
-      [questionId]: value
-    }));
+    console.log('handleAnswerChange:', { questionId, value, type: typeof value });
+    
+    setAnswers(prev => {
+      // Special handling for third_party_tools to ensure it's always a clean array
+      const newValue = questionId === 'third_party_tools' 
+        ? Array.isArray(value) 
+          ? value.map(v => v?.toString().trim()).filter(Boolean)
+          : []
+        : value;
+      
+      const newAnswers = {
+        ...prev,
+        [questionId]: newValue
+      };
+      
+      console.log('Updated answers:', {
+        ...newAnswers,
+        _third_party_tools: newAnswers.third_party_tools,
+        _third_party_tools_type: typeof newAnswers.third_party_tools,
+        _third_party_tools_isArray: Array.isArray(newAnswers.third_party_tools),
+        _third_party_tools_length: newAnswers.third_party_tools?.length,
+        _third_party_tools_first_item: newAnswers.third_party_tools?.[0]
+      });
+      
+      return newAnswers;
+    });
 
     // Track recent answer for feedback
     if (typeof value === 'string') {
@@ -144,23 +193,27 @@ const FormWizard = ({ onSubmit, onSave }) => {
 
   // Calculate quality score based on answer completeness and detail
   const calculateQualityScore = (allAnswers) => {
-    const answerValues = Object.values(allAnswers).filter(v => v !== undefined && v !== null && v !== '');
-    if (answerValues.length === 0) return 0;
+    // Only consider visible/active questions
+    const allVisibleQuestions = categories.flatMap(category =>
+      getCategoryQuestions(category).filter(q => shouldShowQuestion(q, allAnswers))
+    );
+    if (allVisibleQuestions.length === 0) return 0;
 
     let totalScore = 0;
     let scoredAnswers = 0;
 
-    answerValues.forEach(answer => {
+    allVisibleQuestions.forEach(q => {
+      const answer = allAnswers[q.id];
       if (typeof answer === 'string') {
         if (answer.length > 100) totalScore += 100;
         else if (answer.length > 50) totalScore += 75;
         else if (answer.length > 20) totalScore += 50;
-        else totalScore += 25;
+        else if (answer.length > 0) totalScore += 25;
         scoredAnswers++;
       } else if (Array.isArray(answer)) {
         totalScore += Math.min(answer.length * 20, 100);
         scoredAnswers++;
-      } else {
+      } else if (answer !== undefined && answer !== null && answer !== '') {
         totalScore += 50;
         scoredAnswers++;
       }
@@ -225,11 +278,105 @@ const FormWizard = ({ onSubmit, onSave }) => {
     return () => clearTimeout(autoSaveTimer);
   }, [answers]);
 
+  // Show notification
+  const showNotification = (message, type = 'success') => {
+    setNotification({ message, type });
+    setTimeout(() => setNotification(null), 3000);
+  };
+
+  // Test data functions
+  const fillTestData = () => {
+    const testData = generateTestData();
+    console.log('=== FILL TEST DATA START ===');
+    
+    // Define the exact options that should be selected
+    const thirdPartyTools = [
+      'CRM (e.g., Salesforce, HubSpot)',
+      'Email Marketing (e.g., Mailchimp, Constant Contact)',
+      'Payment Processors (e.g., Stripe, PayPal)',
+      'Scheduling Tools (e.g., Calendly, Acuity)'
+    ];
+    
+    // Create a new test data object with the exact values we want
+    const safeTestData = {
+      ...testData,
+      // Ensure all checkbox fields are properly initialized as arrays
+      third_party_tools: [...thirdPartyTools],
+      analytics_tracking: testData.analytics_tracking || []
+    };
+    
+    // Log the generated data for debugging
+    console.log('Generated test data:', {
+      ...safeTestData,
+      _third_party_tools_type: Array.isArray(safeTestData.third_party_tools) ? 'array' : typeof safeTestData.third_party_tools,
+      _third_party_tools_length: safeTestData.third_party_tools?.length,
+      _third_party_tools_first_item: safeTestData.third_party_tools?.[0]
+    });
+    
+    // Update the state with the new data
+    setAnswers(prev => {
+      const newAnswers = { 
+        ...prev,
+        ...safeTestData,
+        // Force new array references for React's change detection
+        third_party_tools: [...thirdPartyTools]
+      };
+      
+      console.log('Setting answers with:', {
+        ...newAnswers,
+        _third_party_tools_length: newAnswers.third_party_tools?.length,
+        _third_party_tools_first_item: newAnswers.third_party_tools?.[0]
+      });
+      
+      return newAnswers;
+    });
+    
+    // Calculate quality score for test data
+    const newQualityScore = calculateQualityScore(safeTestData);
+    setQualityScore(newQualityScore);
+    
+    showNotification('✅ Test data filled successfully!');
+    console.log('✅ Test data filled successfully');
+    console.log('=== FILL TEST DATA END ===');
+  };
+
+  const fillRandomTestData = () => {
+    const randomData = generateRandomTestData();
+    setAnswers(randomData);
+    
+    // Calculate quality score for random data
+    const newQualityScore = calculateQualityScore(randomData);
+    setQualityScore(newQualityScore);
+    
+    showNotification('🎲 Random test data generated!');
+    console.log('🎲 Random test data generated successfully');
+  };
+
+  const clearAllData = () => {
+    setAnswers({});
+    setErrors({});
+    setQualityScore(0);
+    setCurrentStep(0);
+    showNotification('🗑️ All form data cleared', 'info');
+    console.log('🗑️ All form data cleared');
+  };
+
   const isLastStep = currentStep === categories.length - 1;
   const canProceed = currentQuestions.every(q => !q.required || answers[q.id]);
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* Notification */}
+      {notification && (
+        <div className={`fixed top-4 right-4 z-50 px-4 py-2 rounded-lg shadow-lg transition-all duration-300 ${
+          notification.type === 'success' ? 'bg-green-500 text-white' :
+          notification.type === 'info' ? 'bg-blue-500 text-white' :
+          'bg-red-500 text-white'
+        }`}>
+          {notification.message}
+        </div>
+      )}
+      
       {/* Enhanced Progress Header */}
       <div className="bg-white border-b border-gray-200 sticky top-0 z-10">
         <div className="max-w-4xl mx-auto px-4 py-6">
@@ -241,8 +388,47 @@ const FormWizard = ({ onSubmit, onSave }) => {
                 Step {currentStep + 1} of {categories.length}
               </Badge>
             </div>
-            <div className="text-sm text-gray-500">
-              {Math.round(progressPercentage)}% Complete
+            
+            {/* Test Data Controls */}
+            <div className="flex items-center space-x-2">
+              <div className="text-sm text-gray-500 mr-4">
+                {Math.round(progressPercentage)}% Complete
+              </div>
+              
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={fillTestData}
+                className="flex items-center space-x-1 text-xs"
+                title="Fill with realistic test data"
+                aria-label="Fill form with realistic test data"
+              >
+                <TestTube className="w-3 h-3" aria-hidden="true" />
+                <span className="hidden sm:inline">Test Data</span>
+              </Button>
+              
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={fillRandomTestData}
+                className="flex items-center space-x-1 text-xs"
+                title="Fill with random test data"
+                aria-label="Fill form with random test data"
+              >
+                <Shuffle className="w-3 h-3" aria-hidden="true" />
+                <span className="hidden sm:inline">Random</span>
+              </Button>
+              
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={clearAllData}
+                className="flex items-center space-x-1 text-xs text-red-600 hover:text-red-700"
+                title="Clear all form data"
+              >
+                <Circle className="w-3 h-3" />
+                <span className="hidden sm:inline">Clear</span>
+              </Button>
             </div>
           </div>
 
@@ -292,17 +478,33 @@ const FormWizard = ({ onSubmit, onSave }) => {
       <div className="max-w-4xl mx-auto px-4 py-8">
         <Card>
           <CardHeader className="pb-4">
-            <div className="flex items-center space-x-3">
-              {React.createElement(categoryMetadata[currentCategory].icon, {
-                className: `w-6 h-6 text-white p-1 rounded ${categoryMetadata[currentCategory].color}`
-              })}
-              <div>
-                <CardTitle className="text-xl">
-                  {categoryMetadata[currentCategory].title}
-                </CardTitle>
-                <CardDescription className="text-base">
-                  {categoryMetadata[currentCategory].description}
-                </CardDescription>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                {React.createElement(categoryMetadata[currentCategory].icon, {
+                  className: `w-6 h-6 text-white p-1 rounded ${categoryMetadata[currentCategory].color}`
+                })}
+                <div>
+                  <CardTitle className="text-xl">
+                    {categoryMetadata[currentCategory].title}
+                  </CardTitle>
+                  <CardDescription className="text-base">
+                    {categoryMetadata[currentCategory].description}
+                  </CardDescription>
+                </div>
+              </div>
+              
+              {/* Quick Test Data Actions */}
+              <div className="flex items-center space-x-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={fillTestData}
+                  className="flex items-center space-x-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                  title="Fill form with realistic test data"
+                >
+                  <TestTube className="w-4 h-4" />
+                  <span>Fill Test Data</span>
+                </Button>
               </div>
             </div>
           </CardHeader>
@@ -317,13 +519,6 @@ const FormWizard = ({ onSubmit, onSave }) => {
                   onChange={(value) => handleAnswerChange(question.id, value)}
                   error={errors[question.id]}
                   answers={answers}
-                />
-                
-                {/* Helpful Hints */}
-                <HelpfulHints 
-                  questionType={question.type}
-                  category={currentCategory}
-                  questionId={question.id}
                 />
               </div>
             ))}
@@ -374,6 +569,66 @@ const FormWizard = ({ onSubmit, onSave }) => {
           </CardContent>
         </Card>
 
+        {/* Development Tools Panel */}
+        {process.env.NODE_ENV === 'development' && (
+          <div className="mt-6">
+            <Card className="border-dashed border-2 border-blue-200 bg-blue-50">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm text-blue-800 flex items-center space-x-2">
+                  <TestTube className="w-4 h-4" />
+                  <span>Development Tools</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-0">
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={fillTestData}
+                    className="flex items-center space-x-2 bg-white"
+                  >
+                    <TestTube className="w-4 h-4" />
+                    <span>Fill Realistic Test Data</span>
+                  </Button>
+                  
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={fillRandomTestData}
+                    className="flex items-center space-x-2 bg-white"
+                  >
+                    <Shuffle className="w-4 h-4" />
+                    <span>Fill Random Test Data</span>
+                  </Button>
+                  
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={clearAllData}
+                    className="flex items-center space-x-2 bg-white text-red-600 hover:text-red-700"
+                  >
+                    <Circle className="w-4 h-4" />
+                    <span>Clear All Data</span>
+                  </Button>
+                  
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => console.log('Current form data:', answers)}
+                    className="flex items-center space-x-2 bg-white"
+                  >
+                    <span>Log Form Data</span>
+                  </Button>
+                </div>
+                
+                <div className="mt-3 text-xs text-blue-600">
+                  <strong>Tip:</strong> Use test data to quickly fill the form for testing submissions and database connectivity.
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
         {/* Progress Summary */}
         <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
           <Card>
@@ -415,6 +670,6 @@ const FormWizard = ({ onSubmit, onSave }) => {
       </div>
     </div>
   );
-};
+});
 
 export default FormWizard;
