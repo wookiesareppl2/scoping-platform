@@ -17,7 +17,8 @@ import {
   Calendar,
   Zap,
   TestTube,
-  Shuffle
+  Shuffle,
+  Shield
 } from 'lucide-react';
 import { SCOPING_CATEGORIES, getCategoryQuestions, shouldShowQuestion, validateAnswer } from '../types/scoping';
 import FormQuestion from './FormQuestion';
@@ -26,7 +27,11 @@ import { generateTestData, generateRandomTestData } from '../utils/testDataGener
 
 const FormWizard = React.memo(({ onSubmit, onSave }) => {
   const [currentStep, setCurrentStep] = useState(0);
-  const [answers, setAnswers] = useState({});
+  const [answers, setAnswers] = useState({
+    // Initialize with empty arrays for all checkbox fields to prevent undefined issues
+    third_party_tools: [],
+    analytics_tracking: []
+  });
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [startTime] = useState(Date.now());
@@ -74,6 +79,12 @@ const FormWizard = React.memo(({ onSubmit, onSave }) => {
       title: 'Third-Party Integrations',
       description: 'Specify any third-party tools or services',
       color: 'bg-indigo-500'
+    },
+    [SCOPING_CATEGORIES.MAINTENANCE]: { 
+      icon: Shield, 
+      title: 'Maintenance & Support',
+      description: 'Plan for ongoing maintenance and support needs',
+      color: 'bg-teal-500'
     }
   };
 
@@ -85,11 +96,15 @@ const FormWizard = React.memo(({ onSubmit, onSave }) => {
   }, [categories, answers]);
 
   const answeredQuestions = useMemo(() => {
-    return Object.keys(answers).filter(key => {
-      const answer = answers[key];
+    // Only count answers for questions that are currently visible/active
+    const allVisibleQuestions = categories.flatMap(category =>
+      getCategoryQuestions(category).filter(q => shouldShowQuestion(q, answers))
+    );
+    return allVisibleQuestions.filter(q => {
+      const answer = answers[q.id];
       return answer !== undefined && answer !== null && answer !== '';
     }).length;
-  }, [answers]);
+  }, [categories, answers]);
 
   const progressPercentage = useMemo(() => {
     return totalQuestions > 0 ? (answeredQuestions / totalQuestions) * 100 : 0;
@@ -131,10 +146,32 @@ const FormWizard = React.memo(({ onSubmit, onSave }) => {
 
   // Handle answer change
   const handleAnswerChange = (questionId, value) => {
-    setAnswers(prev => ({
-      ...prev,
-      [questionId]: value
-    }));
+    console.log('handleAnswerChange:', { questionId, value, type: typeof value });
+    
+    setAnswers(prev => {
+      // Special handling for third_party_tools to ensure it's always a clean array
+      const newValue = questionId === 'third_party_tools' 
+        ? Array.isArray(value) 
+          ? value.map(v => v?.toString().trim()).filter(Boolean)
+          : []
+        : value;
+      
+      const newAnswers = {
+        ...prev,
+        [questionId]: newValue
+      };
+      
+      console.log('Updated answers:', {
+        ...newAnswers,
+        _third_party_tools: newAnswers.third_party_tools,
+        _third_party_tools_type: typeof newAnswers.third_party_tools,
+        _third_party_tools_isArray: Array.isArray(newAnswers.third_party_tools),
+        _third_party_tools_length: newAnswers.third_party_tools?.length,
+        _third_party_tools_first_item: newAnswers.third_party_tools?.[0]
+      });
+      
+      return newAnswers;
+    });
 
     // Track recent answer for feedback
     if (typeof value === 'string') {
@@ -156,23 +193,27 @@ const FormWizard = React.memo(({ onSubmit, onSave }) => {
 
   // Calculate quality score based on answer completeness and detail
   const calculateQualityScore = (allAnswers) => {
-    const answerValues = Object.values(allAnswers).filter(v => v !== undefined && v !== null && v !== '');
-    if (answerValues.length === 0) return 0;
+    // Only consider visible/active questions
+    const allVisibleQuestions = categories.flatMap(category =>
+      getCategoryQuestions(category).filter(q => shouldShowQuestion(q, allAnswers))
+    );
+    if (allVisibleQuestions.length === 0) return 0;
 
     let totalScore = 0;
     let scoredAnswers = 0;
 
-    answerValues.forEach(answer => {
+    allVisibleQuestions.forEach(q => {
+      const answer = allAnswers[q.id];
       if (typeof answer === 'string') {
         if (answer.length > 100) totalScore += 100;
         else if (answer.length > 50) totalScore += 75;
         else if (answer.length > 20) totalScore += 50;
-        else totalScore += 25;
+        else if (answer.length > 0) totalScore += 25;
         scoredAnswers++;
       } else if (Array.isArray(answer)) {
         totalScore += Math.min(answer.length * 20, 100);
         scoredAnswers++;
-      } else {
+      } else if (answer !== undefined && answer !== null && answer !== '') {
         totalScore += 50;
         scoredAnswers++;
       }
@@ -246,14 +287,57 @@ const FormWizard = React.memo(({ onSubmit, onSave }) => {
   // Test data functions
   const fillTestData = () => {
     const testData = generateTestData();
-    setAnswers(testData);
+    console.log('=== FILL TEST DATA START ===');
+    
+    // Define the exact options that should be selected
+    const thirdPartyTools = [
+      'CRM (e.g., Salesforce, HubSpot)',
+      'Email Marketing (e.g., Mailchimp, Constant Contact)',
+      'Payment Processors (e.g., Stripe, PayPal)',
+      'Scheduling Tools (e.g., Calendly, Acuity)'
+    ];
+    
+    // Create a new test data object with the exact values we want
+    const safeTestData = {
+      ...testData,
+      // Ensure all checkbox fields are properly initialized as arrays
+      third_party_tools: [...thirdPartyTools],
+      analytics_tracking: testData.analytics_tracking || []
+    };
+    
+    // Log the generated data for debugging
+    console.log('Generated test data:', {
+      ...safeTestData,
+      _third_party_tools_type: Array.isArray(safeTestData.third_party_tools) ? 'array' : typeof safeTestData.third_party_tools,
+      _third_party_tools_length: safeTestData.third_party_tools?.length,
+      _third_party_tools_first_item: safeTestData.third_party_tools?.[0]
+    });
+    
+    // Update the state with the new data
+    setAnswers(prev => {
+      const newAnswers = { 
+        ...prev,
+        ...safeTestData,
+        // Force new array references for React's change detection
+        third_party_tools: [...thirdPartyTools]
+      };
+      
+      console.log('Setting answers with:', {
+        ...newAnswers,
+        _third_party_tools_length: newAnswers.third_party_tools?.length,
+        _third_party_tools_first_item: newAnswers.third_party_tools?.[0]
+      });
+      
+      return newAnswers;
+    });
     
     // Calculate quality score for test data
-    const newQualityScore = calculateQualityScore(testData);
+    const newQualityScore = calculateQualityScore(safeTestData);
     setQualityScore(newQualityScore);
     
     showNotification('✅ Test data filled successfully!');
     console.log('✅ Test data filled successfully');
+    console.log('=== FILL TEST DATA END ===');
   };
 
   const fillRandomTestData = () => {
@@ -435,13 +519,6 @@ const FormWizard = React.memo(({ onSubmit, onSave }) => {
                   onChange={(value) => handleAnswerChange(question.id, value)}
                   error={errors[question.id]}
                   answers={answers}
-                />
-                
-                {/* Helpful Hints */}
-                <HelpfulHints 
-                  questionType={question.type}
-                  category={currentCategory}
-                  questionId={question.id}
                 />
               </div>
             ))}

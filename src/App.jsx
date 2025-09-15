@@ -6,6 +6,9 @@ import Home from './pages/Home';
 import ScopingForm from './pages/ScopingForm';
 import AdminDashboard from './pages/AdminDashboard';
 import Analytics from './pages/Analytics';
+import Help from './pages/Help';
+import Privacy from './pages/Privacy';
+import Terms from './pages/Terms';
 import ErrorBoundary from './components/ErrorBoundary';
 
 function App() {
@@ -21,6 +24,9 @@ function App() {
               {/* Redirect old submissions route to admin dashboard */}
               <Route path="submissions" element={<Navigate to="/admin" replace />} />
               <Route path="analytics" element={<Analytics />} />
+              <Route path="help" element={<Help />} />
+              <Route path="privacy" element={<Privacy />} />
+              <Route path="terms" element={<Terms />} />
             </Route>
           </Routes>
         </Router>

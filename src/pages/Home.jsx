@@ -30,21 +30,13 @@ const Home = () => {
           
           <p className="text-xl md:text-2xl text-gray-600 mb-8 leading-relaxed">
             Help us understand your project requirements so we can create 
-            an accurate proposal and timeline for your website development.
+            an accurate proposal and timeline for your website development project.
           </p>
           
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-8">
-            <p className="text-lg text-blue-800 font-medium">
-              The more detailed information you provide, the more accurate our proposal will be.
-            </p>
-            <p className="text-blue-700 mt-2">
-              This helps us avoid scope changes and ensures your project stays on time and budget.
-            </p>
-          </div>
           
-          <Button asChild size="lg" className="text-lg px-8 py-6 mb-4">
+          <Button asChild size="lg" className="text-lg px-8 py-6 mb-4 homepage-letsgo-btn">
             <Link to="/scoping-form">
-              Start Project Requirements
+              Let's Go!
               <ArrowRight className="ml-2 w-5 h-5" />
             </Link>
           </Button>
@@ -134,19 +126,6 @@ const Home = () => {
                   </p>
                 </CardContent>
               </Card>
-            </div>
-            
-            <div className="text-center mt-12">
-              <p className="text-lg text-gray-700 mb-6">
-                Ready to get started? The form takes just 10-15 minutes to complete.
-              </p>
-              
-              <Button asChild size="lg" className="text-lg px-8 py-4">
-                <Link to="/scoping-form">
-                  Begin Project Requirements
-                  <ArrowRight className="ml-2 w-5 h-5" />
-                </Link>
-              </Button>
             </div>
           </div>
         </div>

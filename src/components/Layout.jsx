@@ -11,6 +11,7 @@ import {
   Menu,
   X
 } from 'lucide-react';
+import CookieConsentBanner from './CookieConsentBanner';
 import { useState } from 'react';
 
 const Layout = () => {
@@ -33,6 +34,7 @@ const Layout = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <CookieConsentBanner />
       {/* Header */}
       <header className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -124,7 +126,7 @@ const Layout = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex flex-col md:flex-row justify-between items-center">
             <div className="text-sm text-gray-600">
-              © 2025 Client Scoping System. Built for professional web development.
+              © 2025 On a Digital Note. Doing Good is Good Business.
             </div>
             <div className="flex space-x-4 mt-4 md:mt-0">
               <Link 

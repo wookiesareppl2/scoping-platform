@@ -10,7 +10,8 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { AlertCircle, HelpCircle, Lightbulb, AlertTriangle } from 'lucide-react';
+import { AlertCircle } from 'lucide-react';
+import QuestionTooltip from './QuestionTooltip';
 import { QUESTION_TYPES } from '../types/scoping';
 
 const FormQuestion = ({ question, value, error, onChange, answers }) => {
@@ -31,11 +32,28 @@ const FormQuestion = ({ question, value, error, onChange, answers }) => {
   };
 
   const handleCheckboxChange = (optionValue, checked) => {
-    const currentValues = Array.isArray(value) ? value : [];
+    const optionStr = optionValue?.toString().trim();
+    const currentValues = Array.isArray(value) 
+      ? value.map(v => v?.toString().trim()).filter(Boolean) 
+      : [];
+      
+    console.log('handleCheckboxChange:', { 
+      optionValue, 
+      optionStr, 
+      checked, 
+      currentValues,
+      value,
+      'value type': typeof value
+    });
+    
     if (checked) {
-      handleChange([...currentValues, optionValue]);
+      // Add if not already in the array
+      if (!currentValues.some(v => v === optionStr)) {
+        handleChange([...currentValues, optionStr]);
+      }
     } else {
-      handleChange(currentValues.filter(v => v !== optionValue));
+      // Remove all matching values (case-sensitive)
+      handleChange(currentValues.filter(v => v !== optionStr));
     }
   };
 
@@ -138,12 +156,35 @@ const FormQuestion = ({ question, value, error, onChange, answers }) => {
           </RadioGroup>
         );
 
-      case QUESTION_TYPES.CHECKBOX:
-        const selectedValues = Array.isArray(value) ? value : [];
-        return (
+      case QUESTION_TYPES.CHECKBOX: {
+        // Ensure we have a proper array of selected values
+        const selectedValues = Array.isArray(value) 
+          ? value.map(v => v?.toString().trim()).filter(Boolean)
+          : [];
+          
+        console.group(`Rendering CHECKBOX for ${id}`);
+        console.log('Selected values:', JSON.stringify(selectedValues));
+        console.log('Available options:', JSON.stringify(options));
+        console.log('Raw value type:', typeof value, 'raw value:', value);
+        console.log('Is array?', Array.isArray(value));
+        
+        const result = (
           <div className="space-y-3">
             {options.map((option) => {
-              const isChecked = selectedValues.includes(option);
+              const optionStr = option?.toString().trim() || '';
+              const isChecked = selectedValues.some(selected => {
+                const match = selected === optionStr;
+                if (!match) {
+                  console.log(`No match for ${id}: "${selected}" !== "${optionStr}"`);
+                }
+                return match;
+              });
+              
+              console.log(`Option: "${option}" (${typeof option}), ` +
+                         `isChecked: ${isChecked}, ` +
+                         `in selectedValues: ${selectedValues.includes(optionStr)}, ` +
+                         `value exists: ${selectedValues.some(v => v === optionStr)}`);
+                          
               return (
                 <div key={option} className="flex items-center space-x-3">
                   <Checkbox
@@ -162,6 +203,10 @@ const FormQuestion = ({ question, value, error, onChange, answers }) => {
             })}
           </div>
         );
+        
+        console.groupEnd();
+        return result;
+      }
 
       case QUESTION_TYPES.MULTISELECT:
         const multiSelectedValues = Array.isArray(value) ? value : [];
@@ -270,23 +315,8 @@ const FormQuestion = ({ question, value, error, onChange, answers }) => {
           <Label htmlFor={id} className="text-base font-medium flex items-center space-x-2 text-gray-900 dark:text-gray-100">
             <span>{question.text || question.question}</span>
             {required && <span className="text-red-500">*</span>}
-            {hint && (
-              <div className="group relative">
-                <HelpCircle className="w-4 h-4 text-gray-400 cursor-help" />
-                <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-sm rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-10">
-                  {hint}
-                  <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-gray-900"></div>
-                </div>
-              </div>
-            )}
+            <QuestionTooltip hint={hint} />
           </Label>
-          {/* Hint */}
-          {hint && (
-            <div className="flex items-start space-x-2 text-sm text-blue-600 bg-blue-50 p-3 rounded-lg">
-              <Lightbulb className="w-4 h-4 mt-0.5 flex-shrink-0" />
-              <span>{hint}</span>
-            </div>
-          )}
         </div>
 
         {/* Input Field */}
